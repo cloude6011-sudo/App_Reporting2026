@@ -2,6 +2,11 @@
 
 Aplikasi pelaporan WMS berbasis **Google Apps Script** + web app (HTML).
 
+## Link aplikasi
+Web app (Apps Script): https://script.google.com/macros/s/AKfycbzVpOOlTmf1hnm7Mro5NEmwKixg2TcBvTjzOMVxbUn4tH3spxq3nuYs4QCmEHUrjrDIaQ/exec
+
+Akses memakai PIN (tab `PIN` di spreadsheet database). Dashboard manager (baca saja): tambahkan `?v=dash` di akhir link.
+
 ## Struktur
 | File | Fungsi |
 |---|---|
