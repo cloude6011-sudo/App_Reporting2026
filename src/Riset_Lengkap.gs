@@ -181,11 +181,9 @@ const RI_TABS = [
   ['Laporan_Bulanan', 'LAPORAN', '1 baris per bulan, kolom sama dengan mingguan + SKU dimuat', 'Setoran laporan bulanan'],
   ['Kesesuaian_Mingguan', 'LAPORAN', 'Kesesuaian rak per zona / blok per minggu', 'Evaluasi akurasi lokasi rak'],
   ['Kesesuaian_Bulanan', 'LAPORAN', 'Kesesuaian rak per zona / blok per bulan', 'Evaluasi akurasi lokasi rak'],
-  ['Clearing_Hasil', 'LAPORAN', 'Riwayat hasil Clearing yang disimpan + status kirim Telegram', 'Arsip laporan Clearing'],
   ['Adjustment_List', 'TINDAK LANJUT', 'Daftar adjustment (rak + muat) per baris, siap difilter minggu / bulan', 'Disetor ke admin untuk adjust stok'],
   ['Adjustment_per_Rak', 'TINDAK LANJUT', 'Adjustment per rak per bulan (SO + muat)', 'Mencari rak yang sering selisih'],
   ['Belum_Dicek', 'TINDAK LANJUT', 'Rak yang belum dicek bulan berjalan (yang belum di atas)', 'Pembagian tugas cek rak'],
-  ['CLEARING', 'REKAP DATA', 'Salinan tab REKAP dari spreadsheet sumber (otomatis, jangan diubah)', 'Sumber pencocokan voucher'],
   ['Harian', 'REKAP DATA', 'Rekap muat per tanggal', 'Sumber laporan muat'],
   ['Mingguan', 'REKAP DATA', 'Rekap muat per minggu', 'Sumber laporan muat'],
   ['Bulanan', 'REKAP DATA', 'Rekap muat per bulan', 'Sumber laporan muat'],
@@ -272,10 +270,8 @@ function onOpen() {
       .addSeparator()
       .addItem('Bangun ulang laporan', 'buildLaporan')
       .addItem('Rapikan tab (Daftar Isi, warna, urutan)', 'rapikanTab')
-      .addItem('Pengaturan Telegram (laporan Clearing)', 'tgSetup')
       .addSeparator()
-      .addSeparator()
-      .addItem('⚠ Kosongkan data (pilih mana)…', 'kosongkanDialog')
+      .addItem('⚠ Kosongkan semua data (kecuali Config & PIN)', 'kosongkanSemuaData')
       .addToUi();
   } catch (e) {}
 }
@@ -299,93 +295,51 @@ function risetDariMenu() {
 }
 
 /* =====================================================================
- * KOSONGKAN DATA PILIHAN (Config dan PIN tidak pernah disentuh)
- * Menu: Laporan WMS > Kosongkan data (pilih mana)… -> centang bagian yang mau dikosongkan.
- * Bisa membuat salinan spreadsheet ke Google Drive dulu, dan wajib mengetik KOSONGKAN.
- * CATATAN: perangkat yang masih menyimpan data lama di browser bisa mengirimnya lagi ke server
- * saat menyimpan. Setelah mengosongkan, buka aplikasi di tiap perangkat dan cek dulu.
+ * KOSONGKAN SEMUA DATA (kecuali tab Config dan PIN)
+ * - Tab laporan/rekap dihapus (dibuat ulang otomatis saat aplikasi menyimpan data baru).
+ * - DB (data rak & muat aplikasi), DB_Backup, Log dikosongkan, header dipertahankan.
+ * - Versi data dinaikkan agar perangkat yang terbuka menarik data kosong.
+ * - Dua konfirmasi + salinan spreadsheet otomatis ke Google Drive sebelum menghapus.
+ * CATATAN: perangkat yang masih menyimpan data lama di browser bisa mengirimnya lagi
+ * ke server saat menyimpan. Setelah reset, bersihkan data lokal di tiap perangkat / buka aplikasi dan cek dulu.
  * ===================================================================== */
-const RESET_GRP = [
-  { id: 'rekapMuat', t: 'Rekap muat', d: 'Tab Harian, Mingguan, Bulanan, Selisih_SKU, Selisih_PIC, Selisih_Bulanan',
-    del: ['Harian', 'Mingguan', 'Bulanan', 'Selisih_SKU', 'Selisih_PIC', 'Selisih_Bulanan'] },
-  { id: 'rekapRak', t: 'Rekap cek rak (SO rak)', d: 'Tab Rak, Rak_Detail, Kesesuaian_Mingguan/Bulanan, Belum_Dicek',
-    del: ['Rak', 'Rak_Detail', 'Kesesuaian_Mingguan', 'Kesesuaian_Bulanan', 'Belum_Dicek'] },
-  { id: 'laporan', t: 'Laporan turunan', d: 'Laporan_Mingguan/Bulanan, Adjustment_List, Adjustment_per_Rak, Riset_Data, Daftar_Isi (dibuat ulang otomatis)',
-    del: ['Laporan_Mingguan', 'Laporan_Bulanan', 'Adjustment_List', 'Adjustment_per_Rak', 'Riset_Data', 'Daftar_Isi'] },
-  { id: 'dbMuat', t: 'Data aplikasi MUAT', d: 'Isi kontrol muat di aplikasi (tab DB). Tab rekap tidak ikut terhapus', keys: ['muat'] },
-  { id: 'dbRak', t: 'Data aplikasi RAK', d: 'Daftar rak WMS, pengaturan, sampel SO, hasil cek (tab DB). Berisi master rak, hati-hati', keys: ['rak'] },
-  { id: 'backup', t: 'Cadangan otomatis', d: 'Tab DB_Backup (salinan versi lama). Hapus hanya bila sudah punya salinan di Drive', clr: ['DB_Backup'] },
-  { id: 'log', t: 'Log audit', d: 'Tab Log (riwayat siapa menyimpan apa)', clr: ['Log'] }
-];
+const RESET_DEL = ['Riset_Data', 'Daftar_Isi', 'Laporan_Mingguan', 'Laporan_Bulanan', 'Kesesuaian_Mingguan', 'Kesesuaian_Bulanan',
+  'Adjustment_List', 'Adjustment_per_Rak', 'Belum_Dicek', 'Harian', 'Mingguan', 'Bulanan',
+  'Selisih_Bulanan', 'Selisih_PIC', 'Selisih_SKU', 'Rak', 'Rak_Detail'];
+const RESET_CLR = ['DB', 'DB_Backup', 'Log'];
 
-function adminOnly_() {
-  let me = '';
-  try { me = (Session.getActiveUser().getEmail() || '').toLowerCase(); } catch (e) {}
-  const ss = ss_(), ok = ss.getEditors().map(u => u.getEmail().toLowerCase());
-  try { const o = ss.getOwner(); if (o) ok.push(o.getEmail().toLowerCase()); } catch (e) {}
-  if (!me || ok.indexOf(me) < 0) throw new Error('Hanya editor spreadsheet yang boleh mengosongkan data');
-}
-
-function kosongkanDialog() {
-  const rows = RESET_GRP.map(g => '<label class="r"><input type="checkbox" value="' + g.id + '"><span><b>' + g.t + '</b><small>' + g.d + '</small></span></label>').join('');
-  const html = '<style>body{font:14px Arial,sans-serif;margin:14px;color:#0f172a}.r{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid #e2e8f0;cursor:pointer}' +
-    '.r small{display:block;color:#64748b;font-size:12px}.n{background:#f1f5f9;padding:8px;border-radius:6px;font-size:12px;margin:10px 0}' +
-    'input[type=text]{width:140px;padding:5px}button{padding:8px 14px;border:0;border-radius:6px;background:#b91c1c;color:#fff;font-weight:bold;cursor:pointer}button:disabled{opacity:.5}' +
-    '#st{margin-top:10px;font-size:13px;white-space:pre-wrap}a{cursor:pointer;color:#1d4ed8;font-size:12px}</style>' +
-    '<a onclick="all_()">Pilih semua</a> &nbsp; <a onclick="none_()">Hapus pilihan</a>' + rows +
-    '<div class="n">Tab <b>Config</b> dan <b>PIN</b> tidak pernah diubah.</div>' +
-    '<label><input type="checkbox" id="bk" checked> Buat salinan spreadsheet ke Google Drive dulu (disarankan)</label>' +
-    '<p>Ketik <b>KOSONGKAN</b>: <input type="text" id="kon"> &nbsp; <button id="go" onclick="go_()">Kosongkan</button></p><div id="st"></div>' +
-    '<script>function q_(){return [].slice.call(document.querySelectorAll(\'.r input\'));}' +
-    'function all_(){q_().forEach(function(x){x.checked=true;});}function none_(){q_().forEach(function(x){x.checked=false;});}' +
-    'function go_(){var s=q_().filter(function(x){return x.checked;}).map(function(x){return x.value;}),st=document.getElementById("st"),b=document.getElementById("go");' +
-    'if(!s.length){st.textContent="Pilih dulu data yang mau dikosongkan.";return;}' +
-    'b.disabled=true;st.textContent="Memproses…";' +
-    'google.script.run.withSuccessHandler(function(r){st.textContent=r;}).withFailureHandler(function(e){b.disabled=false;st.textContent="Gagal: "+(e&&e.message?e.message:e);})' +
-    '.kosongkanPilihan(s,document.getElementById("kon").value,document.getElementById("bk").checked);}</script>';
-  SpreadsheetApp.getUi().showModalDialog(HtmlService.createHtmlOutput(html).setWidth(540).setHeight(620), 'Kosongkan data');
-}
-
-function dbDrop_(key) {
-  const sh = ss_().getSheetByName(SHEET_NAME);
-  if (!sh || sh.getLastRow() < 2) return 0;
-  const n = sh.getLastRow() - 1, vals = sh.getRange(2, 1, n, 4).getValues();
-  const keep = vals.filter(r => r[0] !== key);
-  sh.getRange(2, 1, n, 4).clearContent();
-  if (keep.length) { sh.getRange(2, 3, keep.length, 1).setNumberFormat('@'); sh.getRange(2, 1, keep.length, 4).setValues(keep); }
-  PropertiesService.getScriptProperties().setProperty('REV_' + key, String(rev_(key) + 1));   // perangkat lain menarik data terbaru
-  return n - keep.length;
-}
-
-function kosongkanPilihan(ids, konfirmasi, salinan) {
-  adminOnly_();
-  if (String(konfirmasi == null ? '' : konfirmasi).trim() !== 'KOSONGKAN') throw new Error('Ketik KOSONGKAN (huruf besar) untuk konfirmasi');
-  ids = (ids || []).filter(id => RESET_GRP.some(g => g.id === id));
-  if (!ids.length) throw new Error('Belum ada data yang dipilih');
-  const ss = ss_();
+function kosongkanSemuaData() {
+  const ui = SpreadsheetApp.getUi(), ss = ss_();
+  const a = ui.alert('KOSONGKAN SEMUA DATA',
+    'Yang akan dihapus:\n• Data rak & muat di aplikasi (tab DB), DB_Backup, dan Log\n• Semua tab laporan/rekap: ' + RESET_DEL.join(', ') +
+    '\n\nTab Config dan PIN TIDAK diubah.\nSalinan spreadsheet dibuat otomatis di Google Drive sebelum menghapus.\n\nLanjutkan?', ui.ButtonSet.YES_NO);
+  if (a !== ui.Button.YES) return;
+  const p = ui.prompt('Konfirmasi terakhir', 'Ketik KOSONGKAN (huruf besar semua) untuk melanjutkan:', ui.ButtonSet.OK_CANCEL);
+  if (p.getSelectedButton() !== ui.Button.OK || p.getResponseText().trim() !== 'KOSONGKAN') {
+    ui.alert('Dibatalkan', 'Tidak ada data yang diubah.', ui.ButtonSet.OK); return;
+  }
   let bk = '';
-  if (salinan) {
-    try { bk = ss.copy(ss.getName() + ' - cadangan ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HHmm')).getUrl(); }
-    catch (e) { throw new Error('Salinan otomatis gagal (' + String(e && e.message || e) + '). Tidak ada data yang diubah. Buat salinan manual lewat File > Buat salinan, lalu hilangkan centang salinan.'); }
+  try {
+    bk = ss.copy(ss.getName() + ' - cadangan sebelum kosongkan ' + Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd HHmm')).getUrl();
+  } catch (e) {
+    const c = ui.alert('Salinan otomatis GAGAL', String(e && e.message || e) + '\n\nLanjut TANPA cadangan? (Pilih TIDAK, lalu buat salinan manual lewat File > Buat salinan.)', ui.ButtonSet.YES_NO);
+    if (c !== ui.Button.YES) return;
   }
   const lock = LockService.getScriptLock();
   lock.waitLock(30000);
-  let dl = 0, cl = 0, dr = 0;
-  const has = id => ids.indexOf(id) >= 0;
+  let dl = 0, cl = 0;
   try {
-    RESET_GRP.forEach(g => {
-      if (!has(g.id)) return;
-      (g.del || []).forEach(n => { const s = ss.getSheetByName(n); if (s) { try { ss.deleteSheet(s); dl++; } catch (e) {} } });
-      (g.clr || []).forEach(n => { const s = ss.getSheetByName(n); if (s && s.getLastRow() > 1) { s.getRange(2, 1, s.getLastRow() - 1, s.getMaxColumns()).clearContent(); cl++; } });
-      (g.keys || []).forEach(k => { dr += dbDrop_(k); });
+    RESET_DEL.forEach(n => { const s = ss.getSheetByName(n); if (s) { try { ss.deleteSheet(s); dl++; } catch (e) {} } });
+    RESET_CLR.forEach(n => {
+      const s = ss.getSheetByName(n);
+      if (s && s.getLastRow() > 1) { s.getRange(2, 1, s.getLastRow() - 1, s.getMaxColumns()).clearContent(); cl++; }
     });
+    const P = PropertiesService.getScriptProperties();
+    ['rak', 'muat'].forEach(k => P.setProperty('REV_' + k, String(rev_(k) + 1)));
     SpreadsheetApp.flush();
-    if (!has('laporan') && (has('rekapMuat') || has('rekapRak') || has('dbRak'))) lapAuto_();   // laporan yang tersisa ikut dihitung ulang
-    log_('KOSONGKAN', ids.join(','), 0, dl + ' tab dihapus, ' + cl + ' dikosongkan, ' + dr + ' baris DB; cadangan: ' + (bk || 'TIDAK ADA'));
+    log_('RESET', 'SEMUA DATA', 0, dl + ' tab dihapus, ' + cl + ' tab dikosongkan, cadangan: ' + (bk || 'TIDAK ADA'));
   } finally {
     lock.releaseLock();
   }
-  return 'Selesai: ' + dl + ' tab dihapus, ' + cl + ' tab dikosongkan, ' + dr + ' baris DB dibersihkan.' +
-    (!has('laporan') && (has('rekapMuat') || has('rekapRak') || has('dbRak')) ? '\nLaporan tersisa dihitung ulang (tab turunan bisa muncul kosong).' : '') +
-    (bk ? '\nSalinan: ' + bk : '\nTanpa salinan.') + '\nConfig dan PIN tidak diubah. Tutup jendela ini.';
+  ui.alert('Selesai', dl + ' tab laporan dihapus, ' + cl + ' tab data dikosongkan. Config dan PIN tidak diubah.' + (bk ? '\n\nCadangan:\n' + bk : '\n\nTidak ada cadangan.'), ui.ButtonSet.OK);
 }
