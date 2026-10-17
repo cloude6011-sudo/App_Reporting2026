@@ -1,0 +1,29 @@
+# Secrets & kredensial
+.env
+.env.*
+*.pem
+*.key
+secrets.*
+credentials.json
+token*.txt
+.clasprc.json
+
+# Google Apps Script (clasp) - simpan appsscript.json bila perlu, abaikan lokal config
+.clasp.json
+
+# Dependencies & build
+node_modules/
+dist/
+build/
+
+# Log & temporer
+*.log
+*.tmp
+*.bak
+*~
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
