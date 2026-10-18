@@ -113,6 +113,7 @@ function authCheck(tok) { auth_(tok); return true; }
 function srcId_(u) { const m = String(u).match(/\/d\/([a-zA-Z0-9_-]+)/); return m ? m[1] : String(u).trim(); }
 
 function doGet(e) {
+  if (e && e.parameter && e.parameter.ping) return ContentService.createTextOutput(JSON.stringify({ ok: true, api: typeof doPost === 'function', app: 'WMS Warehouse' })).setMimeType(ContentService.MimeType.JSON);   // tes koneksi: <URL /exec>?ping=1
   try { authEmail_(); } catch (err) { return HtmlService.createHtmlOutput('<p style="font-family:sans-serif;padding:2rem">Akses ditolak. Hubungi admin.</p>'); }
   if (!pinAll_().some(e => e.w)) return HtmlService.createHtmlOutput('<p style="font-family:sans-serif;padding:2rem">Aplikasi belum dikonfigurasi. Admin: isi PIN di tab <b>PIN</b> pada spreadsheet database (atau Script property APP_PIN), lalu muat ulang.</p>');
   const view = !!(e && e.parameter && e.parameter.v === 'dash');   // link manager: <URL>?v=dash (tampilan baca-saja)
