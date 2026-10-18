@@ -632,8 +632,51 @@ nav button{font-size:.75rem}
 .mg button:last-child:nth-child(odd){grid-column:1/-1}
 @media(min-width:640px){.mg button:last-child:nth-child(odd){grid-column:auto}.mg{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(min-width:1024px){.mg{grid-template-columns:repeat(4,minmax(0,1fr))}.mg button:hover{border-color:var(--pri)}}
+
+/* ===== POLISH: halus, rapi, ramah pengguna (lapisan terakhir, menimpa gaya di atas) ===== */
+html{scroll-behavior:smooth}
+body{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button{-webkit-user-select:none;user-select:none}
+::selection{background:var(--prib);color:var(--ink)}
+.btn,.chip,.seg button,.tile,nav button,.sy,.hb,input,select,textarea,.card,.rak,.spm,.adj,.pic,.dayr{transition:background-color .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .12s ease,opacity .18s ease}
+@media(hover:hover){.btn:hover{box-shadow:0 2px 8px rgba(20,30,50,.14)}.btn.pri:hover{filter:brightness(1.08)}.tile:hover,.chip:hover{border-color:var(--pri)}.card:hover,.rak:hover,.spm:hover{box-shadow:0 3px 12px rgba(20,30,50,.10)}}
+.btn:active,.chip:active,.tile:active{transform:scale(.97)}
+.btn:disabled,.btn[disabled]{opacity:.5;cursor:not-allowed;box-shadow:none;transform:none;filter:none}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--pri) 45%,transparent);outline-offset:2px}
+input:focus,select:focus,textarea:focus{border-color:var(--pri);box-shadow:0 0 0 3px color-mix(in srgb,var(--pri) 20%,transparent);outline:none}
+.bar{box-shadow:0 1px 0 rgba(0,0,0,.06),0 3px 12px rgba(20,30,50,.08)}
+nav{-webkit-backdrop-filter:saturate(1.5) blur(12px);backdrop-filter:saturate(1.5) blur(12px);background:color-mix(in srgb,var(--card) 90%,transparent)}
+nav button.on::before{animation:pop .28s cubic-bezier(.2,.9,.3,1.25)}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+@keyframes ent{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+main>*{animation:ent .22s ease both}
+#toast{animation:toastin .3s cubic-bezier(.2,.9,.3,1.1);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,14px) scale(.96)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+.boot .spin{width:2.4rem;height:2.4rem;margin:0 auto 1rem;border:3px solid var(--line);border-top-color:var(--pri);border-radius:50%;animation:rot .8s linear infinite}
+@keyframes rot{to{transform:rotate(360deg)}}
+.skel{height:4.2rem;border-radius:.8rem;margin:.8rem auto 0;max-width:30rem;background:linear-gradient(90deg,var(--belb) 25%,var(--line) 37%,var(--belb) 63%);background-size:400% 100%;animation:shim 1.3s ease infinite}
+@keyframes shim{0%{background-position:100% 50%}100%{background-position:0 50%}}
+.pinbox{max-width:22rem;margin:12vh auto 0;padding:1.6rem 1.2rem;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:1.2rem;box-shadow:0 10px 34px rgba(20,30,50,.12);animation:ent .3s ease both}
+.pinbox .pinic{font-size:2.4rem;line-height:1}.pinbox h1{font-size:1.4rem;margin:.4rem 0 .2rem}
+.pinbox p{color:var(--mute);font-size:.95rem;margin:.2rem 0 1.1rem}
+.pinbox small{display:block;margin-top:.9rem;color:var(--mute);font-size:.85rem}
+.pinw{position:relative}.pinw input{text-align:center;letter-spacing:.25em;font-size:1.3rem;padding-right:3rem}
+.pinw .eye{position:absolute;right:.35rem;top:50%;transform:translateY(-50%);width:2.4rem;height:2.4rem;border:0;background:none;font-size:1.2rem;border-radius:.6rem}
+.pinbox .go{width:100%;margin-top:.8rem;min-height:3.2rem;border:0;border-radius:.8rem;background:var(--pri);color:var(--onp);font-weight:700;font-size:1.05rem}
+.pinbox .go:disabled{opacity:.6}
+.shake{animation:shake .35s}
+@keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+#netbar{position:fixed;left:50%;top:calc(var(--hh) + .5rem);transform:translate(-50%,-140%);z-index:25;width:min(94%,34rem);display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;background:var(--selb);color:#5b3a00;border:1px solid #f0c36d;border-radius:.9rem;padding:.65rem .8rem;font-size:.92rem;line-height:1.35;box-shadow:0 8px 24px rgba(20,30,50,.2);opacity:0;pointer-events:none;transition:transform .32s cubic-bezier(.2,.9,.3,1),opacity .25s}
+#netbar.show{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+#netbar .nm2{flex:1 1 14rem}
+#netbar button,#netbar a{min-height:2.5rem;padding:0 .9rem;border-radius:.7rem;border:1px solid currentColor;background:transparent;color:inherit;font-weight:700;font-size:.9rem;display:inline-flex;align-items:center;text-decoration:none}
+html.dk #netbar{background:#3a2c0b;color:#ffe3a3;border-color:#7a5b16}
+#totop{position:fixed;right:max(1rem,env(safe-area-inset-right));bottom:calc(var(--nh) + 1rem);z-index:6;width:3rem;height:3rem;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--pri);font-size:1.3rem;font-weight:700;box-shadow:0 4px 14px rgba(20,30,50,.18);opacity:0;transform:translateY(12px) scale(.9);pointer-events:none;transition:opacity .2s,transform .2s}
+#totop.show{opacity:1;transform:none;pointer-events:auto}
+@media print{#netbar,#totop{display:none!important}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
 </style></head><body>
-<div id="root"><div class="boot">Memuat aplikasi…</div></div>
+<div id="root"><div class="boot"><div class="spin"></div>Memuat aplikasi…<div class="skel"></div><div class="skel" style="opacity:.7"></div><div class="skel" style="opacity:.45"></div></div></div>
 <script>window.__VIEW=false/*__MODE__*/</script><script>try{if(/[?&]v=dash\b/.test(location.search))window.__VIEW=true}catch(e){}</script>
 <script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
@@ -705,7 +748,22 @@ fixM();fixR();
 const tm={},VER={},DIRTY=LS.g('wms_dirty',{});
 const setDirty=(k,v)=>{if(v)DIRTY[k]=1;else delete DIRTY[k];LS.s('wms_dirty',DIRTY)};
 const STL={ok:'Tersimpan',busy:'Menyimpan…',wait:'Menunggu…',err:'Gagal, ketuk',local:'Mode lokal'};
-function setSync(s,m){SYNC=s;emit()}
+let SYNCMSG='';
+function setSync(s,m){SYNC=s;SYNCMSG=m||'';emit();netBar()}
+/* banner koneksi: muncul saat offline / gagal sinkron, lengkap dengan tombol Coba lagi & Diagnosa */
+function netBar(){
+ let b=document.getElementById('netbar');
+ const off=navigator.onLine===false,bad=SYNC==='err';
+ if(!off&&!bad){if(b)b.classList.remove('show');return}
+ if(!b){b=document.createElement('div');b.id='netbar';b.setAttribute('role','status');b.setAttribute('aria-live','polite');document.body.appendChild(b)}
+ const m=SYNCMSG||'';
+ const t=off?'Sedang offline. Data tetap aman di perangkat dan dikirim otomatis saat online.':(/PIN_REQUIRED/.test(m)?'PIN salah atau sudah diganti. Muat ulang lalu masukkan PIN terbaru.':'Belum terhubung ke server. '+m.slice(0,170));
+ b.textContent='';const sp=document.createElement('span');sp.className='nm2';sp.textContent=(off?'📴 ':'⚠️ ')+t;b.appendChild(sp);
+ if(!off){const r=document.createElement('button');r.type='button';r.textContent='Coba lagi';r.onclick=()=>{r.textContent='Menyambung…';r.disabled=true;flush().then(()=>pull(false)).then(()=>{r.disabled=false;r.textContent='Coba lagi'})};b.appendChild(r);
+  if(!IN_GAS){const a=document.createElement('a');a.href='cek.html';a.textContent='Diagnosa';b.appendChild(a)}}
+ requestAnimationFrame(()=>b.classList.add('show'))}
+window.addEventListener('online',()=>{netBar();toast('Kembali online, menyinkronkan…');flush().then(()=>pull(true))});
+window.addEventListener('offline',()=>{netBar();toast('Offline: perubahan disimpan di perangkat')});
 function persist(k){if(VIEW)return;if(!LS.s('wms_'+k,k=='rak'?R:M)&&!persist.w){persist.w=1;toast('Penyimpanan perangkat penuh. Data tetap dikirim ke Sheet, jangan tutup sebelum status ☁')}VER[k]=(VER[k]||0)+1;setDirty(k,1);clearTimeout(tm[k]);setSync('wait');tm[k]=setTimeout(()=>push(k),1500)}
 function push(k){return new Promise(res=>{if(!GS){setSync('local','Mode lokal (tidak di Apps Script)');return res()}const v=VER[k]||0,json=JSON.stringify(k=='rak'?R:M);setSync('busy');
  GS.withSuccessHandler(o=>{if(o&&o.conflict)return res(resolveConflict(k,o));
@@ -1846,7 +1904,9 @@ function App(){const [,tick]=useReducer(x=>x+1,0);useEffect(()=>{linkLabels()});
 /* ============ START ============ */
 function boot(){
  applyFS();applyTheme();try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(TH=='auto')applyTheme()})}catch(e){}
- setSync(GS?'ok':'local');LASTDAY=today();document.body.classList.toggle('view',VIEW);
+ setSync(GS?'ok':'local');LASTDAY=today();
+ {const u=document.createElement('button');u.id='totop';u.type='button';u.setAttribute('aria-label','Kembali ke atas');u.textContent='↑';u.onclick=()=>window.scrollTo({top:0,behavior:'smooth'});document.body.appendChild(u);let on=false;window.addEventListener('scroll',()=>{const v=(window.scrollY||0)>700;if(v!==on){on=v;u.classList.toggle('show',v)}},{passive:true})}
+document.body.classList.toggle('view',VIEW);
  if(!VIEW&&GS)setInterval(()=>{if(!document.hidden&&!SHEET&&!Object.keys(DIRTY).length)pull(true)},180000);
  if(VIEW&&GS){setInterval(()=>pull(true),60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull(true)})}
  ReactDOM.createRoot(document.getElementById('root')).render(html`<${EB}><${App}/><//>`);
@@ -1854,10 +1914,17 @@ function boot(){
  (VIEW?Promise.resolve():flush()).then(()=>pull(true)).then(()=>{rollDay();const t=today();if(M.dates[t]&&!(parseInt(M.dates[t].tMob)>0))fetchSrc([t])});   /* otomatis hanya untuk hari ini; tanggal lain isi manual / tombol Ambil */
  if(GS&&!VIEW)GS.withSuccessHandler(u=>{RK.url=u;emit()}).rekapInfo();
 }
-function pinForm(){const r=document.getElementById('root');r.innerHTML='';const d=document.createElement('div');d.className='boot';
- const h=document.createElement('div');h.textContent=TOKEN?'PIN salah. Coba lagi.':'Masukkan PIN akses WMS';const i=document.createElement('input');i.type='password';i.inputMode='numeric';i.autocomplete='off';i.style.cssText='max-width:14rem;display:block;margin:1rem auto 0;text-align:center';
- const b=document.createElement('button');b.textContent='Masuk';const go=()=>{LS.s('wms_pin',i.value.trim());location.reload()};b.onclick=go;i.onkeydown=e=>{if(e.key==='Enter')go()};
- d.append(h,i,b);r.append(d);i.focus()}
+function pinForm(){const r=document.getElementById('root');r.innerHTML='';
+ const d=document.createElement('div');d.className='pinbox';
+ const mk=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt)e.textContent=txt;if(cls)e.className=cls;return e};
+ const h=mk('h1',TOKEN?'PIN salah':'Masukkan PIN');
+ const p=mk('p',TOKEN?'PIN yang tersimpan tidak cocok. Coba lagi, atau minta PIN terbaru ke admin gudang.':'PIN diberikan admin gudang. Cukup dimasukkan sekali, perangkat ini akan mengingatnya.');
+ const w=mk('div','','pinw');const i=document.createElement('input');i.type='password';i.inputMode='numeric';i.autocomplete='off';i.placeholder='PIN';i.maxLength=32;i.setAttribute('aria-label','PIN akses');
+ const eye=mk('button','👁','eye');eye.type='button';eye.setAttribute('aria-label','Tampilkan PIN');eye.onclick=()=>{const v=i.type==='password';i.type=v?'text':'password';eye.textContent=v?'🙈':'👁';i.focus()};
+ const b=mk('button','Masuk','go');b.type='button';
+ const go=()=>{const v=i.value.trim();if(!v){d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake');i.focus();return}b.disabled=true;b.textContent='Memeriksa…';LS.s('wms_pin',v);location.reload()};
+ b.onclick=go;i.onkeydown=e=>{if(e.key==='Enter')go()};
+ w.append(i,eye);d.append(mk('div','🔒','pinic'),h,p,w,b,mk('small','Lupa PIN? Hubungi admin gudang.'));r.append(d);i.focus()}
 if(!GS)boot();else GS.withSuccessHandler(boot).withFailureHandler(e=>{if(/PIN_REQUIRED/.test(e.message))pinForm();else boot()}).authCheck();
 })();
 </script></body></html>
