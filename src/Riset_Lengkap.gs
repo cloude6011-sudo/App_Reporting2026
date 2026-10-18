@@ -267,6 +267,7 @@ function onOpen() {
   try {
     SpreadsheetApp.getUi().createMenu('Laporan WMS')
       .addItem('📊 Riset Data', 'risetDariMenu')
+      .addItem('✈️ Kirim Riset ke Telegram', 'risetKeTelegram')
       .addSeparator()
       .addItem('Bangun ulang laporan', 'buildLaporan')
       .addItem('Rapikan tab (Daftar Isi, warna, urutan)', 'rapikanTab')

@@ -29,12 +29,20 @@ Akses memakai PIN (tab `PIN` di spreadsheet database). Dashboard manager (baca s
 | `src/Index.html` | Antarmuka web app (frontend), di Apps Script dinamai `Index` |
 | `src/Code.gs` | Server utama: PIN/auth, penyimpanan DB, rekap, laporan mingguan/bulanan, kesesuaian rak |
 | `src/Riset_Lengkap.gs` | Riset Data, Daftar Isi/rapikan tab, menu `Laporan WMS` (`onOpen`), kosongkan data |
+| `src/Telegram_Laporan.gs` | Kirim laporan apa pun ke Telegram (`kirimTelegram`, `kirimRiset`) + menu Sheet |
 | `src/Clearing_UI.gs` | Server untuk tab Clearing di aplikasi web (`clearingData`) |
 | `src/Clearing_Sync.gs` | Sinkronisasi data Clearing dari spreadsheet sumber |
 | `src/Telegram_Clearing.gs` | Pengiriman laporan Clearing ke Telegram |
 
 ## Deploy ke Apps Script
 Salin isi file di `src/` ke project Apps Script (`Index.html` sebagai file HTML bernama `Index`), lalu deploy sebagai Web App.
+
+## Kirim laporan ke Telegram
+Tekan **✈️ Telegram** (tanpa salin-tempel) di: Laporan (Cek Rak, Muat Harian, Muat Mingguan, Clearing), tab Clearing, Tarikan Adjustment, dan Cek rak bulan ini (belum dicek). Kartu **Riset Data** di tab Laporan dan menu Sheet `Laporan WMS > Kirim Riset ke Telegram` mengirim ringkasan KPI bulan ini.
+
+- Atur sekali di Menu > Pengaturan Telegram (token bot + chat ID). Hanya PIN **tulis** yang bisa mengirim; mode manager (`?v=dash`) tidak menampilkan tombolnya.
+- Pesan otomatis dirapikan (judul tebal, tabel monospace, dipecah bila panjang). Laporan yang sama dalam 90 detik ditahan agar tidak terkirim ganda (bisa dipaksa).
+- Setelah memperbarui kode: tempel `Telegram_Laporan.gs`, ganti `Api.gs` dan `Riset_Lengkap.gs`, lalu Deploy > New version.
 
 ## Catatan
 - Hanya boleh ada satu `onOpen`; letaknya di `Riset_Lengkap.gs`.

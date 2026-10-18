@@ -25,6 +25,8 @@ function apiFn_(n) {
     case 'rakCover': return rakCover;
     case 'clearingData': return clearingData;
     case 'simpanClearing': return simpanClearing;
+    case 'kirimTelegram': return kirimTelegram;
+    case 'kirimRiset': return kirimRiset;
     case 'tgStatus': return tgStatus;
     case 'tgAppGet': return tgAppGet;
     case 'tgAppSave': return tgAppSave;

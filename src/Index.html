@@ -675,6 +675,10 @@ html.dk #netbar{background:#3a2c0b;color:#ffe3a3;border-color:#7a5b16}
 #totop.show{opacity:1;transform:none;pointer-events:auto}
 @media print{#netbar,#totop{display:none!important}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+.btn.tg{color:#1d8fc7;border-color:#229ed9}.btn.tg:active{background:#e5f4fb}
+html.dk .btn.tg{color:#6cc6f0;border-color:#3a9fd0}
+.row.acts{flex-wrap:wrap}.row.acts .btn{flex:1 1 6.5rem}
 </style></head><body>
 <div id="root"><div class="boot"><div class="spin"></div>Memuat aplikasi…<div class="skel"></div><div class="skel" style="opacity:.7"></div><div class="skel" style="opacity:.45"></div></div></div>
 <script>window.__VIEW=false/*__MODE__*/</script><script>try{if(/[?&]v=dash\b/.test(location.search))window.__VIEW=true}catch(e){}</script>
@@ -709,6 +713,25 @@ let tt;const toast=m=>{TOASTM=m;emit();clearTimeout(tt);tt=setTimeout(()=>{TOAST
 const LIBS={xlsx:'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',exceljs:'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',pptx:'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js'};
 const need=n=>new Promise((res,rej)=>{if((n=='xlsx'&&window.XLSX)||(n=='exceljs'&&window.ExcelJS)||(n=='pptx'&&window.PptxGenJS))return res();const s=document.createElement('script');s.src=LIBS[n];s.onload=res;s.onerror=()=>rej(new Error('Gagal memuat library, cek internet'));document.head.appendChild(s)});
 const copyTxt=async t=>{try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(x){}a.remove()}};
+/* ---- kirim laporan langsung ke Telegram (tanpa salin-tempel) ---- */
+let TGBUSY=false;
+function tgNotif(r,label,again){
+ if(r.state==='sent')return toast('✅ '+label+' terkirim ke Telegram ('+r.n+' chat)'+(r.err?' · sebagian gagal':''));
+ if(r.state==='dup')return ask('Sudah terkirim barusan','Laporan yang sama baru saja dikirim ke Telegram. Kirim ulang?','Kirim lagi',again);
+ if(r.state==='off')return ask('Telegram nonaktif','Pengiriman ke Telegram sedang dimatikan. Aktifkan di Pengaturan Telegram.','Buka pengaturan',openTg);
+ if(r.state==='nocfg')return ask('Telegram belum diatur','Isi token bot dan chat ID dulu di Pengaturan Telegram. Setelah itu semua laporan bisa dikirim sekali tekan.','Buka pengaturan',openTg);
+ toast('Gagal kirim ke Telegram: '+(r.err||'tidak diketahui'))}
+function tgKirim(text,label,force){
+ if(!GS)return toast('Hanya tersedia di Apps Script');
+ const t=String(text||'').trim();
+ if(t.length<30||/^(Belum ada|Data CLEARING belum|Kolom voucher)/.test(t))return toast('Belum ada isi laporan untuk dikirim');
+ if(TGBUSY)return;TGBUSY=true;toast('✈️ Mengirim '+label+'…');
+ GS.withSuccessHandler(r=>{TGBUSY=false;tgNotif(r,label,()=>tgKirim(t,label,true))}).withFailureHandler(e=>{TGBUSY=false;toast(/PIN_REQUIRED/.test(e.message)?'Butuh PIN tulis (bukan PIN manager)':'Gagal kirim: '+e.message)}).kirimTelegram({text:t,judul:label,force:!!force})}
+function tgRiset(force){
+ if(!GS)return toast('Hanya tersedia di Apps Script');
+ if(TGBUSY)return;TGBUSY=true;toast('✈️ Menyusun Riset Data… ±30 detik');
+ GS.withSuccessHandler(r=>{TGBUSY=false;tgNotif(r,'Riset Data '+(r.bln||''),()=>tgRiset(true))}).withFailureHandler(e=>{TGBUSY=false;toast(/PIN_REQUIRED/.test(e.message)?'Butuh PIN tulis (bukan PIN manager)':'Gagal: '+e.message)}).kirimRiset(!!force)}
+const TGBTN=(onClick,sm)=>VIEW?null:html`<button className=${'btn tg'+(sm?' sm':'')} onClick=${onClick}>✈️ Telegram</button>`;
 
 /* ============ STORAGE + SYNC (Apps Script / Sheet) ============ */
 /* Di Apps Script memakai google.script.run; di hosting lain (GitHub Pages) memakai fetch ke API Apps Script (Api.gs) */
@@ -881,7 +904,10 @@ function CovSheet(){const [f,setF]=useState('belum'),[n,setN]=useState(80);
       <span className=${'rk-st '+(x.a?'ok':'wait')} style=${bdg} title=${x.a?'Dicek '+isoD(x.c.tIt):'Belum dicek'}>Sesuai ${x.a?'✓':'✗'}</span>
       ${x.b?html`<span className="rk-st ok" style=${bdg} title=${'Dihitung '+isoD(x.c.tQ)}>Qty ✓</span>`:x.s?html`<span className="rk-st wait" style=${bdg}>🎲 Qty ✗</span>`:html`<span className="mute" style=${{fontSize:'.75rem'}}>Qty –</span>`}</div></div>`}):html`<div className="empty"><span className="ei">✅</span>${COV.busy?'Memuat…':'Tidak ada rak di daftar ini'}</div>`}
    ${L.length>n?html`<button className="btn block more" onClick=${()=>setN(n+80)}>Tampilkan lagi (${L.length-n} tersisa)</button>`:null}</div>
-  <div className="row"><button className="btn" onClick=${copy} disabled=${!L.length}>Salin daftar</button><button className="btn" onClick=${()=>loadCov(COV.bln)}>Muat ulang</button></div>
+  <div className="row"><button className="btn" onClick=${copy} disabled=${!L.length}>Salin daftar</button>${TGBTN(()=>{const g={};L.forEach(x=>{const b=String(x.r.rak).split('-')[0]||'-';(g[b]=g[b]||[]).push(x.r.rak+(x.s&&!x.b?' (qty)':''))});
+ const lbl={belum:'Belum lengkap',noA:'Belum kesesuaian',samp:'Sampel SO qty belum',ok:'Sudah lengkap'}[f]||f,Z=['*📋 STATUS CEK RAK · '+COV.bln+'*','```',padR('Total rak SO',16)+padL(N,6),padR('Kesesuaian',16)+padL(nA+'/'+N,6)+padL(pc(nA,N)+'%',6),padR('SO Qty (sampel)',16)+padL(nQ+'/'+qTarget(N),6),padR('Rak lengkap',16)+padL(nOk+'/'+N,6),'```','','*Daftar: '+lbl+' ('+L.length+' rak)*'];
+ Object.keys(g).sort().slice(0,40).forEach(b=>Z.push('*'+b+'* ('+g[b].length+'): '+g[b].join(', ')));if(Object.keys(g).length>40)Z.push('_… dan blok lainnya_');if(!L.length)Z.push('Tidak ada rak pada filter ini ✅');
+ tgKirim(waFoot(Z),'Status Cek Rak')})}<button className="btn" onClick=${()=>loadCov(COV.bln)}>Muat ulang</button></div>
   <button className="btn block" onClick=${closeSheet}>Tutup</button>`}
 const lapBlokC=rak=>String(rak).split('-')[0].trim()||'(tanpa rak)';
 async function saveMuatSheet(){if(!GS)return toast('Simpan ke Sheet hanya jalan di Apps Script');
@@ -1014,19 +1040,19 @@ function rakImp(rows){
   R.act[w.rak]={kode:kk,qty:(qq===''||qq==null||isNaN(+qq))?'':+qq,note:ic>=0?String(r[ic]??''):'',saved:true};ok++});
  persist('rak');render();return'Berhasil import '+ok+' rak.'+(skip.length?' Tidak dikenali: '+skip.slice(0,8).join(', '):'')}
  catch(e){return'Gagal: '+(typeof e=='string'?e:'format tidak dikenali.')}}
-function rreport(){const m=rsum(),S=stk(),L=[],P=(a,b)=>a==null?'-':a+'%';
- L.push('LAPORAN KPI AKURASI RAK WMS vs AKTUAL','Lokasi : '+(R.wms[0]?.lokasi||'-'),'Tanggal: '+R.tgl,'Petugas: '+(R.pet||'-'),'Bin di SO: '+m.total+(m.nso?' (tidak di SO: '+m.nso+')':''),'');
- L.push(`1. KESESUAIAN RAK  : ${P(m.accI)}  (item fisik vs WMS; rak dicek ${m.ic}/${m.total}, sesuai ${m.io}, beda ${m.ic-m.io})`,`2. STOCK ITEM      : ${P(m.accS)}  (item dicek ${m.sc}/${m.nItem}, sama ${m.sk}, selisih ${m.sc-m.sk})`,`   Total stok WMS ${fmt(m.tw)} | fisik ${fmt(m.tp)}`,`3. QTY PER BIN     : ${P(m.accQ)}  (bin dicek ${m.qc}/${m.total}, sama ${m.qo}, selisih ${m.qc-m.qo})`);
- const sb=S.done.filter(x=>x.phys!==x.wms);if(sb.length){L.push('','STOCK ITEM: SELISIH STOK PER ITEM:');sb.forEach(x=>L.push(`- ${x.nama} | WMS ${fmt(x.wms)} | Fisik ${fmt(x.phys)} | Selisih ${x.phys-x.wms>0?'+':''}${fmt(x.phys-x.wms)}`))}
- const mv=S.done.filter(x=>x.phys===x.wms&&x.bins.some(b=>!x.wb.some(w=>w[0]===b[0])));if(mv.length){L.push('','STOCK ITEM SAMA, TAPI BERPINDAH BIN:');mv.forEach(x=>L.push(`- ${x.nama} | total ${fmt(x.wms)} | WMS: ${x.wb.map(b=>b[0]+' '+fmt(b[1])).join(', ')} | Fisik: ${x.bins.map(b=>b[0]+' '+fmt(b[1])).join(', ')}`))}
- const bad=R.wms.filter(r=>r.so!==false&&rcheck(r).it=='bad');
- if(bad.length){L.push('','KESESUAIAN RAK BEDA (ITEM FISIK ≠ WMS):');bad.forEach(r=>{const a=rcheck(r).a,ai=actItem(r,a);L.push(`- ${r.rak} | WMS: ${r.kode?r.nama:'(kosong)'} | Aktual: ${ai?rnm(ai):'(kosong)'}${hasQ(a)?' qty '+fmt(a.qty):''}${a.note?' ['+a.note+']':''}`)})}
+function rreport(){const m=rsum(),S=stk(),L=[],P=a=>a==null?'-':a+'%',sg=n=>(n>0?'+':'')+fmt(n);
+ const cap=(a,f,n)=>{n=n||25;a.slice(0,n).forEach(x=>L.push(f(x)));if(a.length>n)L.push(`_… dan ${a.length-n} lainnya_`)};
+ L.push('*📦 LAPORAN KPI AKURASI RAK WMS*','📍 '+(R.wms[0]?.lokasi||'-'),'📅 '+R.tgl+'  ·  👤 '+(R.pet||'-'),'Bin di SO: '+m.total+(m.nso?' (tidak di SO: '+m.nso+')':''),LINE,'');
+ L.push('*A. HASIL KPI*','```',padR('Kesesuaian Rak',16)+padL(P(m.accI),7),'  rak dicek '+m.ic+'/'+m.total+' · sesuai '+m.io+' · beda '+(m.ic-m.io),padR('Stock Item',16)+padL(P(m.accS),7),'  item dicek '+m.sc+'/'+m.nItem+' · sama '+m.sk+' · selisih '+(m.sc-m.sk),'  stok WMS '+fmt(m.tw)+' · fisik '+fmt(m.tp),padR('Qty per Bin',16)+padL(P(m.accQ),7),'  bin dicek '+m.qc+'/'+m.total+' · sama '+m.qo+' · selisih '+(m.qc-m.qo),'```');
+ const sb=S.done.filter(x=>x.phys!==x.wms);if(sb.length){L.push('','*B. SELISIH STOK PER ITEM ('+sb.length+')*');cap(sb,x=>`• ${x.nama}\n   WMS ${fmt(x.wms)} → Fisik ${fmt(x.phys)} (${sg(x.phys-x.wms)})`)}
+ const mv=S.done.filter(x=>x.phys===x.wms&&x.bins.some(b=>!x.wb.some(w=>w[0]===b[0])));if(mv.length){L.push('','*C. STOK SAMA, TAPI BERPINDAH BIN ('+mv.length+')*');cap(mv,x=>`• ${x.nama} · total ${fmt(x.wms)}\n   WMS  : ${x.wb.map(b=>b[0]+' '+fmt(b[1])).join(', ')}\n   Fisik: ${x.bins.map(b=>b[0]+' '+fmt(b[1])).join(', ')}`)}
+ const bad=R.wms.filter(r=>r.so!==false&&rcheck(r).it=='bad');if(bad.length){L.push('','*D. KESESUAIAN RAK BEDA ('+bad.length+')*');cap(bad,r=>{const a=rcheck(r).a,ai=actItem(r,a);return`• ${r.rak}\n   WMS   : ${r.kode?r.nama:'(kosong)'}\n   Aktual: ${ai?rnm(ai):'(kosong)'}${hasQ(a)?' · qty '+fmt(a.qty):''}${a.note?' ['+a.note+']':''}`})}
  const qb=R.wms.filter(r=>{const c=rcheck(r);return r.so!==false&&c.q=='bad'&&c.it!='bad'});
- if(qb.length){L.push('','QTY PER BIN BEDA:');qb.forEach(r=>{const c=rcheck(r);L.push(`- ${r.rak} | ${r.nama} | WMS ${fmt(r.onhand)} | Aktual ${fmt(c.a.qty)} | Selisih ${c.d>0?'+':''}${fmt(c.d)}`)})}
- else if(m.ic||m.qc||m.sc)L.push('','Tidak ada selisih qty per bin.');
- const ar=adjRows();if(ar.length){L.push('',`PERLU ADJUSTMENT QTY (${ar.length} bin):`);ar.forEach(x=>L.push(`- ${x.rak} | ${x.kode} | ${x.qty>0?'+':''}${fmt(x.qty)} (WMS ${fmt(x.wms)} → aktual ${fmt(x.akt)})`))}
- const bl=R.wms.filter(r=>r.so!==false&&!rcheck(r).it&&!rcheck(r).q).map(r=>r.rak);if((m.ic||m.qc)&&bl.length)L.push('','BELUM DICEK: '+bl.join(', '));
- return L.join('\n')}
+ if(qb.length){L.push('','*E. QTY PER BIN BEDA ('+qb.length+')*');cap(qb,r=>{const c=rcheck(r);return`• ${r.rak} · ${r.nama}\n   WMS ${fmt(r.onhand)} → Aktual ${fmt(c.a.qty)} (${sg(c.d)})`})}
+ else if(m.ic||m.qc||m.sc)L.push('','✅ Tidak ada selisih qty per bin.');
+ const ar=adjRows();if(ar.length){L.push('','*F. PERLU ADJUSTMENT QTY ('+ar.length+' bin)*');cap(ar,x=>`• ${x.rak} · ${x.kode} · ${sg(x.qty)}\n   WMS ${fmt(x.wms)} → aktual ${fmt(x.akt)}`)}
+ const bl=R.wms.filter(r=>r.so!==false&&!rcheck(r).it&&!rcheck(r).q).map(r=>r.rak);if((m.ic||m.qc)&&bl.length){L.push('','*G. BELUM DICEK ('+bl.length+')*',bl.slice(0,60).join(', ')+(bl.length>60?` … +${bl.length-60} lainnya`:''))}
+ return waFoot(L)}
 
 /* ============ KONTROL MUAT: parsing ============ */
 const ALASAN=['SPM belum terbit / belum masuk WMS','WMS error / down / lambat','Handheld / scanner bermasalah','Stok WMS tidak sesuai fisik','Lokasi / rak WMS tidak sesuai','Muat urgent / dikejar waktu','Man power kurang','Barang di luar area / belum putaway','Lainnya'];
@@ -1485,7 +1511,8 @@ function AdjSheet(){const c=adjCfg(),rows=adjRows();
    <label className="chk"><input type="checkbox" checked=${!!c.strip} onChange=${e=>set('strip',e.target.checked)}/> Rak tanpa strip terakhir (A1-03-A → A1-03A, sesuai template)</label></div>
   ${rows.length?rows.map(x=>html`<div className="adj" key=${x.rak}><div className="t"><b>${x.rak}</b><b style=${{color:x.qty<0?'var(--bed)':'var(--ok)'}}>${x.qty>0?'+':''}${fmt(x.qty)}</b></div><div className="m">${x.kode} · WMS ${fmt(x.wms)} → aktual ${fmt(x.akt)}</div><div className="m">${x.tgl} · Site ${x.site} · ${x.loc} · Kat ${x.kat}</div></div>`)
    :html`<div className="empty"><span className="ei">✅</span>Belum ada rak dengan selisih qty yang sudah disimpan.</div>`}
-  <div className="sfoot"><div className="row"><button className="btn pri" onClick=${()=>adjXlsx()}>⬇ Excel</button><button className="btn" onClick=${async()=>{const r=adjRows();if(!r.length)return toast('Belum ada adjustment');await copyTxt(['Tanggal','Site','Location','Rak','Kode Item','Keterangan','Qty','Kode Kategori'].join('\t')+'\n'+r.map(x=>[x.tgl,x.site,x.loc,x.rak,x.kode,x.ket,x.qty,x.kat].join('\t')).join('\n'));toast('Disalin — tempel di Excel')}}>Salin</button><button className="btn" onClick=${closeSheet}>Tutup</button></div></div>`}
+  <div className="sfoot"><div className="row"><button className="btn pri" onClick=${()=>adjXlsx()}>⬇ Excel</button>${TGBTN(()=>{const r=adjRows(),c=adjCfg();if(!r.length)return toast('Belum ada adjustment');const net=r.reduce((a,x)=>a+(Number(x.qty)||0),0),Z=['*🔧 TARIKAN ADJUSTMENT RAK*','📍 '+(c.loc||'-')+(c.site?' · '+c.site:''),'📅 '+R.tgl,'Jumlah: '+r.length+' bin · Net qty: '+(net>0?'+':'')+fmt(net),LINE,'','```',padR('Rak',12)+padR('Kode',10)+padL('Qty',8)];
+ r.slice(0,60).forEach(x=>Z.push(padR(x.rak,12)+padR(x.kode,10)+padL((x.qty>0?'+':'')+fmt(x.qty),8)));Z.push('```');if(r.length>60)Z.push('_… dan '+(r.length-60)+' lainnya (lihat Excel)_');tgKirim(waFoot(Z),'Tarikan Adjustment')})}<button className="btn" onClick=${async()=>{const r=adjRows();if(!r.length)return toast('Belum ada adjustment');await copyTxt(['Tanggal','Site','Location','Rak','Kode Item','Keterangan','Qty','Kode Kategori'].join('\t')+'\n'+r.map(x=>[x.tgl,x.site,x.loc,x.rak,x.kode,x.ket,x.qty,x.kat].join('\t')).join('\n'));toast('Disalin — tempel di Excel')}}>Salin</button><button className="btn" onClick=${closeSheet}>Tutup</button></div></div>`}
 
 /* ---------- MUAT ---------- */
 function MobilSheet({dates}){const [v,setV]=useState(()=>Object.fromEntries(dates.map(d=>[d,{m:M.dates[d].tMob||'',s:M.dates[d].tSpm||'',k:M.dates[d].mMasuk||''}]))),set=(d,k,x)=>setV(o=>({...o,[d]:{...o[d],[k]:x}}));
@@ -1756,11 +1783,12 @@ function Lap(){const ds=Object.keys(M.dates).sort();if(!DAY||!M.dates[DAY])DAY=d
    :LAP=='clr'?html`<div className="mute">Isi dari hasil import terakhir di tab Clearing${CL.fn?' ('+CL.fn+')':''}. <button className="btn sm" style=${{marginLeft:'.4rem'}} onClick=${()=>go('clr')}>Buka tab Clearing</button></div>`
    :(ds.length?html`<label className="l">Minggu</label><select value=${WEEK} onChange=${e=>{WEEK=e.target.value;emit()}}>${weeks.map(w=>html`<option key=${w} value=${w}>${weekLabel(w)}</option>`)}</select>`:null)}
    <label className="l">Isi laporan (boleh diedit sebelum dikirim)</label><textarea spellCheck="false" autoCapitalize="off" value=${txt} onChange=${e=>setTxt(e.target.value)}></textarea>
-   <div className="row acts"><button className="btn pri" onClick=${async()=>{await copyTxt(txt);toast('Laporan disalin')}}>Salin</button><button className="btn" onClick=${()=>window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')}>WhatsApp</button><button className="btn" onClick=${async()=>{try{await navigator.share({title:'Laporan WMS',text:txt})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Bagikan</button></div>
+   <div className="row acts"><button className="btn pri" onClick=${async()=>{await copyTxt(txt);toast('Laporan disalin')}}>Salin</button>${TGBTN(()=>tgKirim(txt,{rak:'Laporan Cek Rak',day:'Laporan Muat Harian',week:'Laporan Muat Mingguan',clr:'Laporan Clearing'}[LAP]||'Laporan'))}<button className="btn" onClick=${()=>window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')}>WhatsApp</button><button className="btn" onClick=${async()=>{try{await navigator.share({title:'Laporan WMS',text:txt})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Bagikan</button></div>
    ${LAP=='rak'?html`<div className="row"><button className="btn" onClick=${()=>openSheet(()=>html`<${AdjSheet}/>`)}>⬇ Tarikan adjustment (${rsum().adj} rak)</button></div>`:null}
    ${LAP=='clr'&&clMatch()?html`<div className="row"><button className="btn" onClick=${clExport}>⬇ Unduh hasil (.xlsx)</button></div>`:null}
    ${LAP!='rak'&&LAP!='clr'&&ds.length?html`<div className="row"><button className="btn" onClick=${async()=>{try{toast('Membuat Excel…');await(LAP=='day'?excelDay():excelWeek())}catch(e){toast('Gagal: '+e.message)}}}>⬇ Unduh Excel ${LAP=='day'?'Harian':'Mingguan'}</button><button className="btn pri" onClick=${async()=>{try{toast('Membuat presentasi…');await pptReport();toast('Presentasi (PPT) siap diunduh')}catch(e){toast('Gagal: '+e.message)}}}>Unduh Presentasi (PPT)</button></div>`:null}
   </div>
+  ${VIEW?null:html`<div className="card adminonly"><h3>Riset Data bulan ini</h3><div className="mute">KPI bulan ini vs bulan lalu, temuan otomatis, PIC dan rak bermasalah. Disusun dari Google Sheet lalu dikirim ke Telegram.</div><div className="row"><button className="btn tg" onClick=${()=>tgRiset(false)}>✈️ Kirim Riset ke Telegram</button></div></div>`}
   <div className="card adminonly"><h3>Rekap & Monitoring (Google Sheet)</h3>
    ${(()=>{const st=ds.map(statsDay),miss=st.filter(s=>!s.tMob).length,bel=st.reduce((a,s)=>a+(s.spmWms-s.checked),0),m=rsum();
     const sy=RK.busy?['w','⏳','Mengirim ke Sheet…']:RK.err?['r','⚠️','Gagal kirim: '+RK.err]:RK.t?['g','✅','Terakhir terkirim '+RK.t]:GS?['w','⏳','Belum dikirim']:['','💾','Mode lokal (tanpa Sheet)'];
@@ -1858,7 +1886,7 @@ function Clr(){
     <label className="l">Kolom tanggal (nomor ganda: dipakai tanggal terakhir)</label><select value=${CL.dcol} onChange=${e=>{CL.dcol=+e.target.value;CL.dman=true;emit()}}><option value="-1">— tidak ada: pakai baris paling bawah —</option>${H.map((h,i)=>html`<option key=${i} value=${i}>${h||'(kolom '+(i+1)+')'}</option>`)}</select></details>`:null}</div>
   ${m?html`<div className="cs"><span><b>${tot}</b>voucher</span><span className="g"><b>${m.ok.length}</b>cocok · ${pct1(m.ok.length,tot)}</span><span className=${m.no.length?'r':'g'}><b>${m.no.length}</b>belum di CLEARING</span><span><b>${m.of.length}</b>hanya di CLEARING</span></div>
    <div className="prog"><div style=${{width:(tot?m.ok.length/tot*100:0)+'%'}}></div></div>
-   <div className="cact"><button className="btn pri sm" disabled=${!!CL.sv.busy} onClick=${()=>clSave(false)}>${CL.sv.busy?'⏳ Menyimpan…':'💾 Simpan'}</button><button className="btn sm" onClick=${async()=>{await copyTxt(clrText());toast('Laporan disalin')}}>Salin</button><button className="btn sm" onClick=${()=>window.open('https://wa.me/?text='+encodeURIComponent(clrText()),'_blank')}>WhatsApp</button><button className="btn sm" onClick=${async()=>{try{await navigator.share({title:'Laporan Clearing',text:clrText()})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Bagikan</button><button className="btn sm" onClick=${clExport}>⬇ Excel</button></div>
+   <div className="cact"><button className="btn pri sm" disabled=${!!CL.sv.busy} onClick=${()=>clSave(false)}>${CL.sv.busy?'⏳ Menyimpan…':'💾 Simpan'}</button><button className="btn sm" onClick=${async()=>{await copyTxt(clrText());toast('Laporan disalin')}}>Salin</button>${TGBTN(()=>tgKirim(clrText(),'Laporan Clearing'),true)}<button className="btn sm" onClick=${()=>window.open('https://wa.me/?text='+encodeURIComponent(clrText()),'_blank')}>WhatsApp</button><button className="btn sm" onClick=${async()=>{try{await navigator.share({title:'Laporan Clearing',text:clrText()})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Bagikan</button><button className="btn sm" onClick=${clExport}>⬇ Excel</button></div>
    <div className="mute" style=${{fontSize:'.8rem',margin:'.1rem 0 .3rem'}}>${CL.sv.err?html`<span style=${{color:'var(--bed)'}}>⚠️ Gagal simpan: ${CL.sv.err}</span>`:CL.sv.at?(CL.sv.tg&&CL.sv.tg.state=='fail'?'⚠️':'✓')+' Disimpan '+CL.sv.at+' · '+CL.sv.msg:'Simpan = catat hasil di Sheet'+(CL.tg?(CL.tg.on?' + kirim laporan ke Telegram ('+CL.tg.n+' chat)':CL.tg.set?' · Telegram nonaktif':' · Telegram belum diatur'):'')} <button className="btn sm" style=${{minHeight:'1.8rem',padding:'.1rem .5rem',marginLeft:'.3rem'}} onClick=${openTg}>⚙ Telegram</button></div>
    <${Chips} items=${[['all','Semua ('+cnt.all+')'],['no','Belum di CLEARING ('+cnt.no+')'],['ok','Cocok ('+cnt.ok+')'],['of','Hanya di CLEARING ('+cnt.of+')']]} cur=${CL.f} onPick=${k=>{CL.f=k;CL.lim=60;emit()}}/>
    <input type="search" placeholder="Cari voucher / item…" value=${CL.q} onInput=${e=>{CL.q=e.target.value;CL.lim=60;emit()}}/>
