@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cek koneksi WMS</title>
+<style>
+:root{--bg:#fff;--fg:#0f172a;--mut:#64748b;--ok:#166534;--okb:#bbf7d0;--bad:#991b1b;--badb:#fecaca;--wr:#854d0e;--wrb:#fef08a;--bd:#e2e8f0}
+@media(prefers-color-scheme:dark){:root{--bg:#0f172a;--fg:#e2e8f0;--mut:#94a3b8;--bd:#334155}}
+body{font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg);max-width:640px;margin:0 auto;padding:20px}
+h1{font-size:20px}.row{border:1px solid var(--bd);border-radius:10px;padding:12px;margin:10px 0}
+.t{font-weight:700}.s{display:inline-block;padding:2px 8px;border-radius:99px;font-size:13px;font-weight:700;margin-right:8px}
+.PASS{background:var(--okb);color:var(--ok)}.FAIL{background:var(--badb);color:var(--bad)}.WAIT{background:var(--wrb);color:var(--wr)}
+.m{color:var(--mut);font-size:14px;margin-top:4px;white-space:pre-wrap;word-break:break-word}
+button,a.b{font:inherit;padding:10px 16px;border-radius:10px;border:0;background:#0a6c74;color:#fff;text-decoration:none;display:inline-block;margin:6px 6px 0 0;cursor:pointer}
+</style></head><body>
+<h1>Cek koneksi WMS</h1>
+<div class="m">Menguji hubungan halaman ini ke Apps Script. Tidak ada data yang diubah.</div>
+<p><button id="go">Tes ulang</button><a class="b" id="open" target="_blank" rel="noopener">Buka aplikasi langsung (Apps Script)</a></p>
+<div id="out"></div>
+<script>
+const API_URL='https://script.google.com/macros/s/AKfycbzVpOOlTmf1hnm7Mro5NEmwKixg2TcBvTjzOMVxbUn4tH3spxq3nuYs4QCmEHUrjrDIaQ/exec';
+document.getElementById('open').href=API_URL;
+const out=document.getElementById('out');
+function row(title){const d=document.createElement('div');d.className='row';d.innerHTML='<div class="t"></div><div class="m"></div>';d.firstChild.textContent=title;out.appendChild(d);
+  return (st,msg)=>{d.firstChild.innerHTML='<span class="s '+st+'">'+st+'</span>';d.firstChild.append(title);d.lastChild.textContent=msg||''}}
+async function tes(){
+  out.innerHTML='';
+  // 1) Jangkauan + versi (GET ?ping=1)
+  const r1=row('1. Server terjangkau & versi terbaru (GET ?ping=1)');r1('WAIT','Menguji…');
+  let ver=false;
+  try{
+    const r=await fetch(API_URL+'?ping=1');const tx=await r.text();let j=null;try{j=JSON.parse(tx)}catch(e){}
+    if(j&&j.ok&&j.api){ver=true;r1('PASS','Backend versi baru aktif (doPost tersedia).')}
+    else if(j&&j.ok){r1('FAIL','Code.gs terbaru ada, tetapi Api.gs (doPost) belum ditempel.\nTempel src/Api.gs lalu Deploy > Manage deployments > Edit > New version.')}
+    else r1('FAIL','Server membalas halaman biasa (bukan JSON). Deployment masih memakai versi LAMA.\nDeploy > Manage deployments > ikon pensil > Version: New version > Deploy.')
+  }catch(e){
+    r1('FAIL','Tidak ada balasan yang bisa dibaca browser (diblokir CORS atau jaringan).\nPenyebab paling umum: deployment masih versi lama, atau akses bukan "Anyone".\nPeriksa: Execute as = Me, Who has access = Anyone, lalu New version.')}
+  // 2) doPost
+  const r2=row('2. Endpoint API (POST authCheck)');r2('WAIT','Menguji…');
+  try{
+    const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn:'authCheck',args:['']})});
+    const tx=await r.text();let j=null;try{j=JSON.parse(tx)}catch(e){}
+    if(j&&j.ok===false&&/PIN_REQUIRED|PIN belum/.test(j.error||'')){r2('PASS','doPost bekerja: server menolak PIN kosong, sesuai harapan.')}
+    else if(j&&j.ok===true){r2('PASS','doPost bekerja.')}
+    else if(j&&j.ok===false){r2('FAIL','Server membalas: '+j.error)}
+    else r2('FAIL','Balasan bukan JSON (HTTP '+r.status+'). Api.gs belum di-deploy sebagai New version.\nCuplikan: '+tx.replace(/\s+/g,' ').slice(0,160))
+  }catch(e){r2('FAIL','Tidak terhubung (CORS/jaringan). Sama seperti langkah 1: deploy New version + akses Anyone.')}
+  // 3) PIN opsional
+  const pin=localStorage.getItem('wms_pin');
+  const r3=row('3. PIN tersimpan di browser ini');
+  if(!pin)r3('WAIT','Belum ada PIN. Buka aplikasi dan masukkan PIN dulu.');
+  else{try{const r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({fn:'authCheck',args:[JSON.parse(pin)]})});const j=await r.json();
+    j.ok?r3('PASS','PIN valid.'):r3('FAIL',j.error==='PIN_REQUIRED'?'PIN salah / sudah diganti. Keluar lalu masukkan PIN dari tab "PIN" di spreadsheet.':j.error)}catch(e){r3('FAIL','Tidak bisa diuji (lihat langkah 2).')}}
+}
+document.getElementById('go').onclick=tes;tes();
+</script></body></html>

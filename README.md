@@ -12,6 +12,8 @@ Frontend memanggil backend Apps Script lewat `fetch` (endpoint `doPost` di `src/
 2. Deploy > Manage deployments > Edit > Version: **New version**. Pengaturan: Execute as **Me**, Who has access **Anyone** (bukan "Anyone with Google account"). Link `/exec` tetap sama.
 3. Bila link `/exec` berubah, ubah `API_URL` di `index.html` dan `src/Index.html`.
 
+**Diagnosa:** bila aplikasi gagal terhubung, buka `cek.html` (https://cloude6011-sudo.github.io/App_Reporting2026/cek.html). Halaman itu menguji versi deploy, endpoint API, dan PIN, lalu menjelaskan langkah yang kurang.
+
 **Catatan:** `index.html` (root, untuk Pages) dan `src/Index.html` (untuk Apps Script) harus identik; salin ulang bila salah satu diubah.
 
 ## Link aplikasi
