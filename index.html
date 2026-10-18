@@ -679,6 +679,28 @@ html.dk #netbar{background:#3a2c0b;color:#ffe3a3;border-color:#7a5b16}
 .btn.tg{color:#1d8fc7;border-color:#229ed9}.btn.tg:active{background:#e5f4fb}
 html.dk .btn.tg{color:#6cc6f0;border-color:#3a9fd0}
 .row.acts{flex-wrap:wrap}.row.acts .btn{flex:1 1 6.5rem}
+
+.okx{text-align:center;padding:.4rem .2rem .2rem}
+.okc{width:5rem;height:5rem;margin:.2rem auto .7rem;border-radius:50%;background:#dcfce7;display:grid;place-items:center;position:relative;animation:okpop .45s cubic-bezier(.2,.9,.3,1.3) both}
+html.dk .okc{background:#14532d}
+.okc::after{content:"";position:absolute;inset:0;border-radius:50%;border:3px solid #22c55e;opacity:0;animation:okring .9s ease-out .15s}
+.okc svg{width:3.4rem;height:3.4rem}
+.okc circle{stroke:#22c55e;stroke-width:3;fill:none;stroke-dasharray:151;stroke-dashoffset:151;animation:okdraw .5s ease-out .1s forwards}
+.okc path{stroke:#16a34a;stroke-width:4;stroke-linecap:round;stroke-linejoin:round;fill:none;stroke-dasharray:40;stroke-dashoffset:40;animation:okdraw .35s ease-out .45s forwards}
+html.dk .okc path{stroke:#4ade80}
+@keyframes okdraw{to{stroke-dashoffset:0}}
+@keyframes okpop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+@keyframes okring{0%{transform:scale(.85);opacity:.9}100%{transform:scale(1.55);opacity:0}}
+.okx h3{margin:.2rem 0;font-size:1.3rem}.okx .oks{color:var(--mute);margin:.1rem 0 .7rem}
+.okr{text-align:left;border:1px solid var(--line);border-radius:.9rem;overflow:hidden;margin:.6rem 0}
+.okr>div{display:flex;justify-content:space-between;gap:1rem;padding:.55rem .8rem;border-bottom:1px solid var(--line)}
+.okr>div:last-child{border-bottom:0}.okr span{color:var(--mute)}.okr b{text-align:right;word-break:break-word}
+.okreset{display:inline-block;background:var(--prib);color:var(--ink);border-radius:99px;padding:.3rem .85rem;font-size:.88rem;margin:.1rem 0 .7rem}
+.okb{display:flex;gap:.5rem;flex-wrap:wrap}.okb .btn{flex:1 1 8rem}
+.okt{height:3px;background:var(--line);border-radius:3px;margin-top:.9rem;overflow:hidden}
+.okt i{display:block;height:100%;background:#22c55e;transform-origin:left;animation:oktm linear forwards}
+@keyframes oktm{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+#toast.ok{background:#166534;color:#fff}
 </style></head><body>
 <div id="root"><div class="boot"><div class="spin"></div>Memuat aplikasi…<div class="skel"></div><div class="skel" style="opacity:.7"></div><div class="skel" style="opacity:.45"></div></div></div>
 <script>window.__VIEW=false/*__MODE__*/</script><script>try{if(/[?&]v=dash\b/.test(location.search))window.__VIEW=true}catch(e){}</script>
@@ -731,6 +753,20 @@ function tgRiset(force){
  if(!GS)return toast('Hanya tersedia di Apps Script');
  if(TGBUSY)return;TGBUSY=true;toast('✈️ Menyusun Riset Data… ±30 detik');
  GS.withSuccessHandler(r=>{TGBUSY=false;tgNotif(r,'Riset Data '+(r.bln||''),()=>tgRiset(true))}).withFailureHandler(e=>{TGBUSY=false;toast(/PIN_REQUIRED/.test(e.message)?'Butuh PIN tulis (bukan PIN manager)':'Gagal: '+e.message)}).kirimRiset(!!force)}
+/* ---- layar "BERHASIL" untuk semua aksi simpan: centang animasi, ringkasan, info reset, tutup otomatis ---- */
+let OKID=0;
+function okSheet(o){
+ const id=++OKID,auto=o.auto===0?0:(o.auto||9);
+ try{navigator.vibrate&&navigator.vibrate([12,40,12])}catch(e){}
+ openSheet(()=>html`<div className="okx" role="status">
+  <div className="okc"><svg viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M14 27l8 8 16-17"/></svg></div>
+  <h3>${o.t}</h3>${o.sub?html`<div className="oks">${o.sub}</div>`:null}
+  ${o.rows&&o.rows.length?html`<div className="okr">${o.rows.map(([a,b],k)=>html`<div key=${k}><span>${a}</span><b>${b}</b></div>`)}</div>`:null}
+  ${o.reset?html`<div className="okreset">↺ ${o.reset}</div>`:null}
+  <div className="okb">${(o.acts||[]).map((a,k)=>html`<button key=${k} type="button" className="btn" onClick=${()=>{closeSheet();a.f()}}>${a.l}</button>`)}<button type="button" className="btn pri" onClick=${()=>closeSheet()}>${o.doneL||'Selesai'}</button></div>
+  ${auto?html`<div className="okt"><i style=${{animationDuration:auto+'s'}}></i></div>`:null}</div>`);
+ if(SHEET)SHEET.ok=id;
+ if(auto)setTimeout(()=>{if(SHEET&&SHEET.ok===id)closeSheet()},auto*1000)}
 const TGBTN=(onClick,sm)=>VIEW?null:html`<button className=${'btn tg'+(sm?' sm':'')} onClick=${onClick}>✈️ Telegram</button>`;
 
 /* ============ STORAGE + SYNC (Apps Script / Sheet) ============ */
@@ -807,10 +843,10 @@ function rekapPayload(){const ds=Object.keys(M.dates).sort(),mons=[...new Set(ds
 let rkT;
 function pushRekap(quiet){clearTimeout(rkT);return new Promise(res=>{if(!GS){if(!quiet)toast('Rekap Sheet hanya jalan di Apps Script');return res()}
  rkT=setTimeout(()=>{RK.busy=true;emit();let p;try{p=rekapPayload()}catch(e){RK.busy=false;RK.err=e.message;emit();return res()}
-  GS.withSuccessHandler(o=>{RK.busy=false;RK.err='';if(o&&o.url)RK.url=o.url;if(o&&!o.skipped){RK.t=nowStr();p.days.forEach(x=>{SV.muat[x.date]=RK.t})}emit();if(!quiet)toast(o&&o.skipped?'Belum ada data muat untuk direkap':'Rekap muat tersimpan: '+o.upd+' tanggal ditimpa, '+o.ins+' baru');res(o)})
+  GS.withSuccessHandler(o=>{RK.busy=false;RK.err='';if(o&&o.url)RK.url=o.url;if(o&&!o.skipped){RK.t=nowStr();p.days.forEach(x=>{SV.muat[x.date]=RK.t})}emit();if(!quiet){if(o&&o.skipped)toast('Belum ada data muat untuk direkap');else okSheet({t:'Rekap muat tersimpan',sub:'Data sudah masuk ke Google Sheet.',rows:[['Tanggal ditimpa',o.upd],['Tanggal baru',o.ins],['Minggu',o.weeks],['Bulan',o.months],['SKU selisih',o.sel]],acts:o.url?[{l:'Buka Sheet',f:()=>window.open(o.url,'_blank')}]:[]})}res(o)})
   .withFailureHandler(e=>{RK.busy=false;RK.err=e.message;emit();if(!quiet)toast('Gagal kirim rekap: '+e.message);res()}).saveRekap(p)},quiet?2500:0)})}
 function pushRak(quiet){if(!GS)return Promise.resolve();const m=rsum();if(!m.ic&&!m.qc&&!m.sc)return Promise.resolve();return new Promise(res=>{
- GS.withSuccessHandler(o=>{if(o&&!o.skipped){RK.t=nowStr();RK.err=''}if(o&&o.url)RK.url=o.url;emit();if(!quiet)toast('Rekap rak terkirim ke Sheet');res()})
+ GS.withSuccessHandler(o=>{if(o&&!o.skipped){RK.t=nowStr();RK.err=''}if(o&&o.url)RK.url=o.url;emit();if(!quiet)okSheet({t:'Rekap rak terkirim',sub:'Ringkasan cek rak sudah masuk ke Sheet.',rows:[['Tanggal',isoD(R.tgl)],['Total rak',m.total]]});res()})
  .withFailureHandler(e=>{RK.err=e.message;emit();if(!quiet)toast('Gagal kirim rekap rak: '+e.message);res()})
  .saveRak({tgl:R.tgl,petugas:R.pet||'',total:m.total,ic:m.ic,io:m.io,qc:m.qc,qo:m.qo,adj:m.adj,sc:m.sc,sk:m.sk,tw:m.tw,tp:m.tp})})}
 const openRekap=()=>{if(RK.url)window.open(RK.url,'_blank');else if(GS)GS.withSuccessHandler(u=>{RK.url=u;emit();window.open(u,'_blank')}).rekapInfo();else toast('Hanya tersedia di Apps Script')};
@@ -845,7 +881,7 @@ async function doSaveRak(rows){RKB=true;emit();
   SV.rak[tg]=nowStr();COV.bln='';
   R.done=R.done||{};R.done[tg]={m:rsum(),adj:adjRows(),pet:R.pet||'',t:nowStr()};const dk=Object.keys(R.done).sort();while(dk.length>45)delete R.done[dk.shift()];
   R.act={};if(R.hist)delete R.hist[tg];RF='all';SQ='';LISTKEY='';persist('rak');
-  toast('✓ SO Rak '+isoD(tg)+' tersimpan & terverifikasi di Sheet ('+o.upd+' ditimpa, '+o.ins+' baru'+(o.del?', '+o.del+' dihapus':'')+'). Form dikosongkan.')}
+  okSheet({t:'SO Rak '+isoD(tg)+' tersimpan',sub:'Sudah terverifikasi masuk ke Sheet.',rows:[['Rak ditimpa',o.upd],['Rak baru',o.ins]].concat(o.del?[['Rak dihapus',o.del]]:[],[['Total rak dikirim',rows.length],['Petugas',R.pet||'-']]),reset:'Form cek rak dikosongkan, siap untuk SO berikutnya',doneL:'SO berikutnya'})}
  catch(e){toast('Gagal simpan: '+((e&&e.message)||e))}
  RKB=false;emit()}
 /* ---- COVERAGE: rak yang SUDAH / BELUM dicek (kesesuaian & SO qty) per bulan ---- */
@@ -937,7 +973,7 @@ function SrcSheet(){const [c,setC]=useState({url:'',sheet:'',headRow:1,colTgl:''
  const ok=c.url.trim()&&c.sheet&&(mode=='cell'?c.cell.trim():(c.colTgl&&c.colMob));
  const save=async()=>{const m={...c,url:c.url.trim()};
   if(mode=='cell'){m.cell=m.cell.trim();m.cellTgl=String(m.cellTgl||'').trim();m.cellSpm=String(m.cellSpm||'').trim();m.cellMasuk=String(m.cellMasuk||'').trim()}else{m.cell='';m.cellTgl='';m.cellSpm='';m.cellMasuk=''}
-  M.meta.src=m;persist('muat');closeSheet();toast('Sumber disimpan, mengambil data…');const n=await fetchSrc(Object.keys(M.dates),true);toast(n?n+' tanggal terisi dari sumber':(mode=='cell'&&!m.cellTgl?'Tersimpan. Angka sel hanya diambil untuk data tanggal hari ini':'Tersimpan. Belum ada tanggal yang cocok di sumber'))};
+  M.meta.src=m;persist('muat');closeSheet();toast('Sumber disimpan, mengambil data…');const n=await fetchSrc(Object.keys(M.dates),true);okSheet({t:'Sumber tersimpan',sub:n?n+' tanggal terisi dari sumber.':(mode=='cell'&&!m.cellTgl?'Angka sel hanya diambil untuk data tanggal hari ini.':'Belum ada tanggal yang cocok di sumber.'),rows:[['Tab',m.sheet],['Mode',mode=='cell'?'Satu sel':'Tabel per tanggal']],auto:6})};
  const Col=(k,l,ph)=>html`<div><label className="l">${l}</label><input list="srch" value=${c[k]} placeholder=${ph} onChange=${e=>set(k,e.target.value)}/></div>`;
  const Cel=(k,l,ph)=>html`<div><label className="l">${l}</label><input value=${c[k]} placeholder=${ph} autoCapitalize="characters" autoComplete="off" onChange=${e=>set(k,e.target.value)}/></div>`;
  const Mode=k=>html`<select value=${c[k]} onChange=${e=>set(k,e.target.value)}><option value="sum">Jumlahkan angka di kolom</option><option value="count">Hitung baris per tanggal</option><option value="unique">Hitung nilai unik (mis. nopol)</option></select>`;
@@ -1078,8 +1114,10 @@ async function loadFiles(files){
  if(hasSrc&&dates.length>1)note=' · Upload '+dates.length+' tanggal sekaligus: total mobil isi manual dulu';
  else if(hasSrc&&dates.length===1){if(srcOneCell(M.meta.src)&&dates[0]!==today())note=' · Total mobil '+isoD(dates[0])+' isi manual (mode satu sel hanya untuk hari ini)';
   else{toast('Tersimpan. Mengambil total mobil dari sheet sumber…');const n=await fetchSrc(dates,true);note=n?' · Total mobil terisi otomatis dari sheet sumber':' · Total mobil tidak ditemukan di sheet sumber, isi manual'}}
- if(!errs.length&&!VIEW){const miss=dates.length>1?dates:dates.filter(d=>!(parseInt(M.dates[d].tMob)>0));if(miss.length)setTimeout(()=>openMobil(miss),400)}   /* >1 tanggal: minta isi total mobil manual */
- toast(errs.length?errs.join(' · '):'Tersimpan: '+dates.map(isoD).join(', ')+(merged.length?' (digabung dengan file sebelumnya: '+merged.map(isoD).join(', ')+')':'')+note+(warn.length?' · ⚠ '+warn.join(' · '):''))}
+ let asked=false;if(!errs.length&&!VIEW){const miss=dates.length>1?dates:dates.filter(d=>!(parseInt(M.dates[d].tMob)>0));if(miss.length){asked=true;setTimeout(()=>openMobil(miss),400)}}   /* >1 tanggal: minta isi total mobil manual */
+ const txtU=(errs.length?errs.join(' · '):'Tersimpan: '+dates.map(isoD).join(', ')+(merged.length?' (digabung dengan file sebelumnya: '+merged.map(isoD).join(', ')+')':'')+note+(warn.length?' · ⚠ '+warn.join(' · '):''));
+ if(errs.length||asked||!dates.length)toast(txtU);
+ else okSheet({t:'Upload berhasil',sub:note?note.replace(/^ · /,''):'Data muat tersimpan di aplikasi.',rows:[['File dibaca',files.length],['Tanggal data',dates.map(isoD).join(', ')],['Baris data',dates.reduce((a,d)=>a+batch[d].rows.length,0)]].concat(merged.length?[['Digabung dengan file sebelumnya',merged.map(isoD).join(', ')]]:[],warn.length?[['Perhatian',warn.join(' · ')]]:[]),reset:'Pilihan file dikosongkan, siap upload berikutnya',auto:8})}
 function parseText(t){if(/<table/i.test(t)){const doc=new DOMParser().parseFromString(t,'text/html');return[...doc.querySelectorAll('tr')].map(tr=>[...tr.children].map(td=>td.textContent.trim()))}
  const lines=t.split(/\r?\n/),sep=lines.some(l=>l.includes('\t'))?'\t':(lines.some(l=>l.includes(';'))?';':',');return lines.map(l=>l.split(sep))}
 const COLS={ship:['ship to'],spm:['no spm','spm'],nopol:['nopol'],item:['item'],desc:['deskripsi'],qtySpm:['qty spm'],uom:['uom'],tgl:['tgl muat'],rak:['rak'],lok:['lokasi'],qtyMuat:['qty muat'],pic:['pic muat'],start:['start muat'],end:['selesai muat'],remark:['remark muat','remark'],pchk:['pic check'],echk:['selesai check']};
@@ -1369,7 +1407,7 @@ function Header(){const ini=((M.meta.pelapor||'').trim()[0]||'W').toUpperCase();
 const NI={tg:'M22 3 2 11l6 2.5L10 20l3.5-4 5 3.5zM8 13.5 18 6',sync:'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5',home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',rak:'M3 4h18v5H3zM5 9v10h14V9M10 13h4',muat:'M1 6h13v10H1zM14 10h4l3 3v3h-7',lap:'M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5M8 13h8M8 17h6',dash:'M4 20V11M10 20V4M16 20v-6M22 20H2',clr:'M9 12l2 2 4-4M12 3l8 3v6c0 4.5-3.2 7.7-8 9-4.8-1.3-8-4.5-8-9V6z'};
 function Nav(){const T=VIEW?[['dash','Dashboard'],['lap','Laporan']]:[['home','Beranda'],['rak','Cek Rak'],['muat','Muat'],['clr','Clearing'],['dash','Dashboard'],['lap','Laporan']];
  return html`<${F0}><div className=${'nbg'+(MENU?' on':'')} onClick=${()=>setMenu(false)}></div><nav aria-label="Menu utama" className=${MENU?'open':''}><div className="nbrand"><b>WMS Warehouse</b><span>${M.meta.area||''}</span></div>${T.map(([k,l])=>html`<button key=${k} className=${TAB==k?'on':''} aria-current=${TAB==k?'page':null} onClick=${()=>go(k)}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI[k]}/>${k=='muat'?html`<circle cx="5.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>`:null}</svg></i>${l}</button>`)}${VIEW?null:html`<div className="nsep"></div><button onClick=${openTg}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 3 2 11l6 2.5L10 20l3.5-4 5 3.5zM8 13.5 18 6"/></svg></i>Telegram</button><button onClick=${()=>{setMenu(false);syncNow()}}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI.sync}/></svg></i>Sinkron data</button>`}</nav><//>`}
-function Toast(){return html`<div aria-live="polite" role="status">${TOASTM?html`<div id="toast">${TOASTM}</div>`:null}</div>`}
+function Toast(){return html`<div aria-live="polite" role="status">${TOASTM?html`<div id="toast" className=${/^(✅|✓)/.test(TOASTM)?'ok':''}>${TOASTM}</div>`:null}</div>`}
 function Sheet(){const ref=useRef(),gy=useRef(null),open=!!SHEET;
  useEffect(()=>{if(!open)return;const prev=document.activeElement,el=ref.current;if(el){el.setAttribute('tabindex','-1');try{el.focus({preventScroll:true})}catch(e){}}
   const k=e=>{if(e.key!=='Tab'||!ref.current)return;const f=[...ref.current.querySelectorAll('button,input,select,textarea,summary,[tabindex]:not([tabindex="-1"])')].filter(x=>!x.disabled&&x.type!=='hidden'&&x.getClientRects().length);if(!f.length)return;const a=f[0],z=f[f.length-1],c=document.activeElement;
@@ -1491,7 +1529,7 @@ function DataSheet(){const [pst,setPst]=useState(''),[msg,setMsg]=useState('');
  const upw=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{await need('xlsx');const wb=XLSX.read(await f.arrayBuffer()),rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1}),hi=rows.findIndex(r=>r.includes('Rak')),h=rows[hi],ix=n=>h.indexOf(n);
    const nAll=rows.slice(hi+1).filter(r=>r[ix('Rak')]).length,nw=rows.slice(hi+1).filter(r=>r[ix('Rak')]&&inScope(r[ix('Rak')])).map(r=>({lokasi:r[ix('Lokasi')]||'',rak:String(r[ix('Rak')]),kode:String(r[ix('Kode Item')]??''),nama:r[ix('Nama Item')]||'',onhand:+r[ix('Onhand')]||0}));
    if(!nw.length)throw 0;const sn=new Set(),nu=nw.filter(r=>{const k=r.rak.trim().toLowerCase();if(sn.has(k))return false;sn.add(k);return true}),dup=nw.length-nu.length,had=Object.keys(R.act||{}).length,
-    doIt=()=>{R.wms=nu;R.act={};persist('rak');closeSheet();render();toast('Data WMS diperbarui: '+nu.length+' rak (area '+(SCOPE.join(', ')||'semua')+')'+(dup?' · '+dup+' kode rak dobel dilewati':'')+(nAll-nw.length?' · '+(nAll-nw.length)+' rak di luar area diabaikan':''))};
+    doIt=()=>{R.wms=nu;R.act={};persist('rak');closeSheet();render();okSheet({t:'Data WMS diperbarui',rows:[['Rak dimuat',nu.length],['Area',SCOPE.join(', ')||'semua']].concat(dup?[['Kode rak dobel dilewati',dup]]:[],nAll-nw.length?[['Di luar area (diabaikan)',nAll-nw.length]]:[]),reset:'Hasil cek rak sebelumnya direset',auto:7})};
    if(had)ask('Ganti data WMS?','Hasil cek rak yang sudah diisi ('+had+' rak) akan direset.','Ganti data',doIt,1);else doIt()}catch(err){toast('Format tidak dikenali. Perlu kolom Rak, Kode Item, Nama Item, Onhand.')}};
  return html`<h3>Data Cek Rak</h3>
   <div className="card"><b>Import data aktual</b><div className="mute" style=${{margin:'.3rem 0 .6rem'}}>Kolom: <b>Rak</b>, <b>Kode Item</b>, <b>Qty Aktual</b> (opsional), Catatan (opsional).</div><input type="file" accept=".xlsx,.xls,.csv" onChange=${upa}/>
@@ -1517,7 +1555,7 @@ function AdjSheet(){const c=adjCfg(),rows=adjRows();
 /* ---------- MUAT ---------- */
 function MobilSheet({dates}){const [v,setV]=useState(()=>Object.fromEntries(dates.map(d=>[d,{m:M.dates[d].tMob||'',s:M.dates[d].tSpm||'',k:M.dates[d].mMasuk||''}]))),set=(d,k,x)=>setV(o=>({...o,[d]:{...o[d],[k]:x}}));
  const empty=dates.filter(d=>!(parseInt(v[d].m)>0)).length;
- const save=()=>{dates.forEach(d=>{M.dates[d].tMob=String(v[d].m).trim();M.dates[d].mMasuk=String(v[d].k||'').trim();syncReasons(d)});persist('muat');closeSheet();toast(empty?'Tersimpan. '+empty+' tanggal masih kosong, bisa diisi nanti':'Total mobil '+dates.length+' tanggal tersimpan')};
+ const save=()=>{dates.forEach(d=>{M.dates[d].tMob=String(v[d].m).trim();M.dates[d].mMasuk=String(v[d].k||'').trim();syncReasons(d)});persist('muat');closeSheet();{const e0=Number(empty)||0;okSheet({t:'Total mobil tersimpan',sub:e0?e0+' tanggal masih kosong, bisa diisi nanti.':'Semua tanggal sudah terisi.',rows:[['Tanggal diisi',dates.length-e0],['Tanggal kosong',e0]],reset:'Isian dikosongkan, data tersimpan di aplikasi',auto:6})}};
  return html`<h3>Isi Total Mobil dan Mobil Masuk</h3>
   <div className="mute">${dates.length>1?'Upload lebih dari 1 tanggal: total mobil diisi manual.':'Total mobil belum terisi.'} Total SPM otomatis sama dengan total mobil.</div>
   ${dates.map(d=>{const S=statsDay(d);return html`<div className="dayr" key=${d}><div className="t"><b>${dayName(d).slice(0,3)} ${isoD(d)}</b><span className="mute">WMS: ${S.spmWms} SPM</span></div>
@@ -1857,6 +1895,7 @@ function clrText(){const I=CL.imp,m=clMatch();
  if(m.of.length){L.push('',`*C. ADA DI CLEARING, TIDAK ADA DI LAPORAN (${m.of.length})*`);lst(m.of,x=>'• '+x.v)}
  return waFoot(L)}
 function clTgLoad(){if(!GS||CL.tgAsked)return;CL.tgAsked=true;GS.withSuccessHandler(r=>{CL.tg=r;emit()}).withFailureHandler(()=>{}).tgStatus()}
+function clReset(){CL.imp=null;CL.fn='';CL.col=-1;CL.manual=false;CL.dcol=-1;CL.dman=false;CL.f='all';CL.q='';CL.lim=60;CL.sv={};emit()}
 function clSave(force){const m=clMatch(),I=CL.imp;if(!m||!I)return toast('Belum ada hasil untuk disimpan');
  if(!GS)return toast('Simpan hanya tersedia saat tersambung ke Apps Script');if(CL.sv.busy)return;
  const p={text:clrText(),file:CL.fn,tot:m.ok.length+m.no.length,ok:m.ok.length,no:m.no.length,of:m.of.length,noList:m.no.map(x=>x.v)};
@@ -1864,7 +1903,9 @@ function clSave(force){const m=clMatch(),I=CL.imp;if(!m||!I)return toast('Belum 
  GS.withSuccessHandler(r=>{
    if(r&&r.dup){CL.sv={};emit();return ask('Sudah pernah disimpan','Hasil ini sama dengan yang terakhir disimpan. Simpan dan kirim lagi ke Telegram?','Kirim lagi',()=>clSave(true))}
    const t=r.tg||{},msg={sent:'laporan terkirim ke Telegram ('+(t.n||1)+' chat)'+(t.err?' · gagal: '+t.err:''),fail:'Telegram GAGAL: '+(t.err||'tidak terkirim'),off:'Telegram nonaktif',nocfg:'Telegram belum diatur'}[t.state]||'';
-   CL.sv={at:r.at,tg:t,msg};emit();toast('Tersimpan · '+msg)})
+   const txt=p.text,tl={sent:'Terkirim ('+(t.n||1)+' chat)'+(t.err?' · sebagian gagal':''),fail:'Gagal: '+(t.err||'tidak terkirim'),off:'Nonaktif',nocfg:'Belum diatur'}[t.state]||'—';
+   CL.last={at:r.at||nowStr(),fn:p.file,tot:p.tot,ok:p.ok};clReset();
+   okSheet({t:'Berhasil disimpan',sub:'Hasil clearing sudah dicatat di Sheet.',rows:[['File',p.file||'-'],['Voucher',p.tot],['Cocok',p.ok+' · '+pct1(p.ok,p.tot)],['Belum di CLEARING',p.no],['Hanya di CLEARING',p.of],['Disimpan',CL.last.at],['Telegram',tl]],reset:'Upload dikosongkan, siap untuk file berikutnya',acts:[{l:'Salin laporan',f:async()=>{await copyTxt(txt);toast('Laporan disalin')}}].concat(t.state!=='sent'&&!VIEW?[{l:'✈️ Kirim ke Telegram',f:()=>tgKirim(txt,'Laporan Clearing')}]:[]),doneL:'Upload berikutnya'})})
   .withFailureHandler(e=>{CL.sv={err:String(e&&e.message||e)};emit();toast('Gagal simpan: '+CL.sv.err)})
   .simpanClearing(p,!!force)}
 function Clr(){
@@ -1879,14 +1920,14 @@ function Clr(){
  return html`<${F0}>
   <div className="card"><div className="row mid"><h3>Clearing</h3><button className="btn sm" disabled=${CL.busy} onClick=${()=>clLoad(true)}>${CL.busy?'⏳ Memuat…':'🔄 Perbarui'}</button></div>
    ${CL.err?html`<div className="mute" style=${{color:'var(--bed)'}}>⚠️ ${CL.err}</div>`:null}
-   <div className="mute" style=${{fontSize:'.82rem',marginBottom:'.4rem'}}>${d?(d.rows.length?d.rows.length+' baris REKAP'+(d.at?' · disalin '+d.at:''):(d.msg||'Belum ada data')):(CL.busy?'Memuat…':'Belum dimuat')}${I?' · 📄 '+CL.fn+' ('+I.list.length+' voucher'+(I.bad?', '+I.bad+' dilewati':'')+')':''}</div>
+   <div className="mute" style=${{fontSize:'.82rem',marginBottom:'.4rem'}}>${d?(d.rows.length?d.rows.length+' baris REKAP'+(d.at?' · disalin '+d.at:''):(d.msg||'Belum ada data')):(CL.busy?'Memuat…':'Belum dimuat')}${I?' · 📄 '+CL.fn+' ('+I.list.length+' voucher'+(I.bad?', '+I.bad+' dilewati':'')+')':''}${!I&&CL.last?' · ✅ Terakhir disimpan '+CL.last.at+' ('+CL.last.fn+': cocok '+CL.last.ok+'/'+CL.last.tot+')':''}</div>
    <label className="btn pri up">＋ Upload laporan voucher<small>.xlsx · .xls · .csv — kolom No Voucher (7 angka)</small><input type="file" hidden accept=".xls,.xlsx,.csv" onChange=${e=>{const f=e.target.files[0];e.target.value='';clImport(f)}}/></label>
    ${H.length?html`<details className="ck" open=${CL.col<0}><summary>Kolom: voucher = <b>${CL.col>=0?H[CL.col]||'(kolom '+(CL.col+1)+')':'belum dipilih'}</b> · tanggal = <b>${CL.dcol>=0?H[CL.dcol]||'(kolom '+(CL.dcol+1)+')':'—'}</b></summary>
     <label className="l">Kolom voucher (7 angka dari depan)</label><select value=${CL.col} onChange=${e=>{CL.col=+e.target.value;CL.manual=true;CL.lim=60;clAutoD();emit()}}><option value="-1">— pilih kolom —</option>${H.map((h,i)=>html`<option key=${i} value=${i}>${h||'(kolom '+(i+1)+')'}</option>`)}</select>
     <label className="l">Kolom tanggal (nomor ganda: dipakai tanggal terakhir)</label><select value=${CL.dcol} onChange=${e=>{CL.dcol=+e.target.value;CL.dman=true;emit()}}><option value="-1">— tidak ada: pakai baris paling bawah —</option>${H.map((h,i)=>html`<option key=${i} value=${i}>${h||'(kolom '+(i+1)+')'}</option>`)}</select></details>`:null}</div>
   ${m?html`<div className="cs"><span><b>${tot}</b>voucher</span><span className="g"><b>${m.ok.length}</b>cocok · ${pct1(m.ok.length,tot)}</span><span className=${m.no.length?'r':'g'}><b>${m.no.length}</b>belum di CLEARING</span><span><b>${m.of.length}</b>hanya di CLEARING</span></div>
    <div className="prog"><div style=${{width:(tot?m.ok.length/tot*100:0)+'%'}}></div></div>
-   <div className="cact"><button className="btn pri sm" disabled=${!!CL.sv.busy} onClick=${()=>clSave(false)}>${CL.sv.busy?'⏳ Menyimpan…':'💾 Simpan'}</button><button className="btn sm" onClick=${async()=>{await copyTxt(clrText());toast('Laporan disalin')}}>Salin</button>${TGBTN(()=>tgKirim(clrText(),'Laporan Clearing'),true)}<button className="btn sm" onClick=${()=>window.open('https://wa.me/?text='+encodeURIComponent(clrText()),'_blank')}>WhatsApp</button><button className="btn sm" onClick=${async()=>{try{await navigator.share({title:'Laporan Clearing',text:clrText()})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Bagikan</button><button className="btn sm" onClick=${clExport}>⬇ Excel</button></div>
+   <div className="cact"><button className="btn pri sm" disabled=${!!CL.sv.busy} onClick=${()=>clSave(false)}>${CL.sv.busy?'⏳ Menyimpan…':'💾 Simpan'}</button><button className="btn sm" disabled=${!!CL.sv.busy} onClick=${()=>ask('Reset upload?','Hasil upload ini dikosongkan. Data di Sheet tidak berubah.','Reset',()=>{clReset();toast('Upload dikosongkan')},1)}>↺ Reset</button><button className="btn sm" onClick=${async()=>{await copyTxt(clrText());toast('Laporan disalin')}}>Salin</button>${TGBTN(()=>tgKirim(clrText(),'Laporan Clearing'),true)}<button className="btn sm" onClick=${()=>window.open('https://wa.me/?text='+encodeURIComponent(clrText()),'_blank')}>WhatsApp</button><button className="btn sm" onClick=${async()=>{try{await navigator.share({title:'Laporan Clearing',text:clrText()})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Bagikan</button><button className="btn sm" onClick=${clExport}>⬇ Excel</button></div>
    <div className="mute" style=${{fontSize:'.8rem',margin:'.1rem 0 .3rem'}}>${CL.sv.err?html`<span style=${{color:'var(--bed)'}}>⚠️ Gagal simpan: ${CL.sv.err}</span>`:CL.sv.at?(CL.sv.tg&&CL.sv.tg.state=='fail'?'⚠️':'✓')+' Disimpan '+CL.sv.at+' · '+CL.sv.msg:'Simpan = catat hasil di Sheet'+(CL.tg?(CL.tg.on?' + kirim laporan ke Telegram ('+CL.tg.n+' chat)':CL.tg.set?' · Telegram nonaktif':' · Telegram belum diatur'):'')} <button className="btn sm" style=${{minHeight:'1.8rem',padding:'.1rem .5rem',marginLeft:'.3rem'}} onClick=${openTg}>⚙ Telegram</button></div>
    <${Chips} items=${[['all','Semua ('+cnt.all+')'],['no','Belum di CLEARING ('+cnt.no+')'],['ok','Cocok ('+cnt.ok+')'],['of','Hanya di CLEARING ('+cnt.of+')']]} cur=${CL.f} onPick=${k=>{CL.f=k;CL.lim=60;emit()}}/>
    <input type="search" placeholder="Cari voucher / item…" value=${CL.q} onInput=${e=>{CL.q=e.target.value;CL.lim=60;emit()}}/>
