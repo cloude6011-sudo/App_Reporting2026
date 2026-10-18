@@ -735,7 +735,7 @@ const TGBTN=(onClick,sm)=>VIEW?null:html`<button className=${'btn tg'+(sm?' sm':
 
 /* ============ STORAGE + SYNC (Apps Script / Sheet) ============ */
 /* Di Apps Script memakai google.script.run; di hosting lain (GitHub Pages) memakai fetch ke API Apps Script (Api.gs) */
-const API_URL='https://script.google.com/macros/s/AKfycbzVpOOlTmf1hnm7Mro5NEmwKixg2TcBvTjzOMVxbUn4tH3spxq3nuYs4QCmEHUrjrDIaQ/exec';
+const API_URL='https://script.google.com/macros/s/AKfycbxzyikIVDASYk22Ee1bRzD8o3-zOsetPLT0Cm5yyjNAvV23GHZCWOJfFCcCIvVgI-IZaw/exec';
 const IN_GAS=!!(window.google&&google.script&&google.script.run);
 const mkRun=h=>new Proxy({},{get:(_,n)=>n==='withSuccessHandler'?f=>mkRun({...h,ok:f}):n==='withFailureHandler'?f=>mkRun({...h,fail:f}):(...a)=>{
   const fail=e=>{if(h.fail)h.fail(e instanceof Error?e:new Error(String(e)));else console.error(e)};
