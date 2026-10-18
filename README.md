@@ -2,6 +2,18 @@
 
 Aplikasi pelaporan WMS berbasis **Google Apps Script** + web app (HTML).
 
+## Hosting GitHub Pages
+Frontend: **https://cloude6011-sudo.github.io/App_Reporting2026/** (dashboard manager: tambahkan `?v=dash`).
+
+Frontend memanggil backend Apps Script lewat `fetch` (endpoint `doPost` di `src/Api.gs`). Satu file `Index.html` bisa dipakai di dua tempat: di Apps Script (`google.script.run`) dan di GitHub Pages (`fetch`).
+
+**Setup backend (sekali):**
+1. Tempel `src/Api.gs` sebagai file baru di project Apps Script.
+2. Deploy > Manage deployments > Edit > Version: **New version**. Pengaturan: Execute as **Me**, Who has access **Anyone** (bukan "Anyone with Google account"). Link `/exec` tetap sama.
+3. Bila link `/exec` berubah, ubah `API_URL` di `index.html` dan `src/Index.html`.
+
+**Catatan:** `index.html` (root, untuk Pages) dan `src/Index.html` (untuk Apps Script) harus identik; salin ulang bila salah satu diubah.
+
 ## Link aplikasi
 Web app (Apps Script): https://script.google.com/macros/s/AKfycbzVpOOlTmf1hnm7Mro5NEmwKixg2TcBvTjzOMVxbUn4tH3spxq3nuYs4QCmEHUrjrDIaQ/exec
 
@@ -10,6 +22,8 @@ Akses memakai PIN (tab `PIN` di spreadsheet database). Dashboard manager (baca s
 ## Struktur
 | File | Fungsi |
 |---|---|
+| `index.html` | Salinan `src/Index.html` untuk GitHub Pages |
+| `src/Api.gs` | Endpoint `doPost` (JSON) untuk frontend di luar Apps Script |
 | `src/Index.html` | Antarmuka web app (frontend), di Apps Script dinamai `Index` |
 | `src/Code.gs` | Server utama: PIN/auth, penyimpanan DB, rekap, laporan mingguan/bulanan, kesesuaian rak |
 | `src/Riset_Lengkap.gs` | Riset Data, Daftar Isi/rapikan tab, menu `Laporan WMS` (`onOpen`), kosongkan data |
