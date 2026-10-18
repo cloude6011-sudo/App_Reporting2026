@@ -17,7 +17,7 @@ Frontend memanggil backend Apps Script lewat `fetch` (endpoint `doPost` di `src/
 **Catatan:** `index.html` (root, untuk Pages) dan `src/Index.html` (untuk Apps Script) harus identik; salin ulang bila salah satu diubah.
 
 ## Link aplikasi
-Web app (Apps Script): https://script.google.com/macros/s/AKfycbxzyikIVDASYk22Ee1bRzD8o3-zOsetPLT0Cm5yyjNAvV23GHZCWOJfFCcCIvVgI-IZaw/exec
+Web app (Apps Script): https://script.google.com/macros/s/AKfycbwgZmFrt5XCgGk8_hIoeNCwRc0xiCnICbeDhY8HofgS5kbFLHWRk13zuoA9hnsj31sjuw/exec
 
 Akses memakai PIN (tab `PIN` di spreadsheet database). Dashboard manager (baca saja): tambahkan `?v=dash` di akhir link.
 
