@@ -48,6 +48,14 @@ Tekan **✈️ Telegram** (tanpa salin-tempel) di: Laporan (Cek Rak, Muat Harian
 - **Muat Harian/Mingguan:** bagian *Belum ada hasil counting checker* (no lori, SPM, customer, PIC muat, item + qty untuk dicek) dan *Rincian & analisa kemungkinan* untuk tiap selisih (item tertukar, rak ter-scan dobel, salah ketik 10x, hitungan antar-PIC, dll).
 - **Clearing:** voucher yang belum ada di CLEARING (dengan item/qty/rak/posisi dan deteksi salah ketik nomor), *no voucher sama tetapi qty beda* (qty laporan, CLEARING terbaru, CLEARING sebelumnya, selisih, analisa), kode item beda, dan voucher yang hanya ada di CLEARING. Pilih kolom qty/kode item CLEARING di tab Clearing (terdeteksi otomatis). Hasil qty beda ikut dicatat di tab Sheet Clearing (kolom Qty beda).
 
+## Laporan Clearing (voucher vs hasil counting)
+Upload laporan voucher di tab Clearing, lalu dicocokkan dengan tab CLEARING. Laporan (Telegram/Salin/WhatsApp) berisi:
+- **Belum ada hasil counting**: no voucher, kode/nama item, qty, **no lori dan PIC**, serta analisa (mis. sudah N hari tanpa counting → prioritas).
+- **No voucher sama, qty beda**: qty voucher (laporan) vs qty terbaru di CLEARING, riwayat qty sebelum → sesudah, dan analisa kemungkinan (salah ketik nol, 2×/½, revisi belum terbawa, input dobel, kode item beda).
+- **Ada di CLEARING tapi tidak di laporan**.
+
+No lori dan PIC diambil otomatis dari kolom file upload atau tab CLEARING bila headernya bernama mis. `No Lori`/`Nopol`/`Plat`/`Kendaraan` dan `PIC`/`Petugas`/`Checker`/`Operator`. Bila tidak ada, aplikasi memperkirakannya dari data Muat (kode item, qty, dan tanggal yang berdekatan) dan memberi label "perkiraan dari data Muat".
+
 ## Catatan
 - Hanya boleh ada satu `onOpen`; letaknya di `Riset_Lengkap.gs`.
 - Script properties yang dipakai: `APP_PIN`, `VIEW_PIN`, `ALLOWED_EMAILS`, `SRC_ALLOW`, `SRC_ID`, `TG_TOKEN`, `TG_CHAT`, `TG_ON` (semua diisi di Project Settings, bukan di kode).
