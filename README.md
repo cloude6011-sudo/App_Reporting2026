@@ -44,6 +44,10 @@ Tekan **✈️ Telegram** (tanpa salin-tempel) di: Laporan (Cek Rak, Muat Harian
 - Pesan otomatis dirapikan (judul tebal, tabel monospace, dipecah bila panjang). Laporan yang sama dalam 90 detik ditahan agar tidak terkirim ganda (bisa dipaksa).
 - Setelah memperbarui kode: tempel `Telegram_Laporan.gs`, ganti `Api.gs` dan `Riset_Lengkap.gs`, lalu Deploy > New version.
 
+### Isi laporan yang dikirim
+- **Muat Harian/Mingguan:** bagian *Belum ada hasil counting checker* (no lori, SPM, customer, PIC muat, item + qty untuk dicek) dan *Rincian & analisa kemungkinan* untuk tiap selisih (item tertukar, rak ter-scan dobel, salah ketik 10x, hitungan antar-PIC, dll).
+- **Clearing:** voucher yang belum ada di CLEARING (dengan item/qty/rak/posisi dan deteksi salah ketik nomor), *no voucher sama tetapi qty beda* (qty laporan, CLEARING terbaru, CLEARING sebelumnya, selisih, analisa), kode item beda, dan voucher yang hanya ada di CLEARING. Pilih kolom qty/kode item CLEARING di tab Clearing (terdeteksi otomatis). Hasil qty beda ikut dicatat di tab Sheet Clearing (kolom Qty beda).
+
 ## Catatan
 - Hanya boleh ada satu `onOpen`; letaknya di `Riset_Lengkap.gs`.
 - Script properties yang dipakai: `APP_PIN`, `VIEW_PIN`, `ALLOWED_EMAILS`, `SRC_ALLOW`, `SRC_ID`, `TG_TOKEN`, `TG_CHAT`, `TG_ON` (semua diisi di Project Settings, bukan di kode).

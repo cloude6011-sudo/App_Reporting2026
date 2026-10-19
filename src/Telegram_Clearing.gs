@@ -143,7 +143,8 @@ function simpanClearing(tok, p, force) {
   const text = String(p.text || '').slice(0, 20000);
   if (!text || text.length < 20) throw new Error('Tidak ada hasil untuk disimpan');
   const num = v => Math.max(0, Math.round(Number(v) || 0));
-  const tot = num(p.tot), ok = num(p.ok), no = num(p.no), of = num(p.of);
+  const tot = num(p.tot), ok = num(p.ok), no = num(p.no), of = num(p.of), qd = num(p.qd);
+  const qdList = (Array.isArray(p.qdList) ? p.qdList : []).slice(0, 200).map(v => String(v).slice(0, 40)).join(', ').slice(0, 2000);
   const noList = (Array.isArray(p.noList) ? p.noList : []).slice(0, 500).map(v => String(v).replace(/\D/g, '').slice(0, 7)).filter(Boolean).join(', ');
   const sig = Utilities.base64Encode(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, text.replace(/_Update: [^\n]*_/, '')));
   const P = PropertiesService.getScriptProperties();
@@ -160,16 +161,17 @@ function simpanClearing(tok, p, force) {
     let sh = ss.getSheetByName(TG_SHEET);
     if (!sh) {
       sh = ss.insertSheet(TG_SHEET);
-      sh.getRange(1, 1, 1, 9).setValues([['Waktu simpan', 'File laporan', 'Voucher', 'Cocok', 'Belum di CLEARING', 'Hanya di CLEARING', '% Cocok', 'Voucher belum di CLEARING', 'Telegram']])
+      sh.getRange(1, 1, 1, 11).setValues([['Waktu simpan', 'File laporan', 'Voucher', 'Cocok', 'Belum di CLEARING', 'Hanya di CLEARING', '% Cocok', 'Voucher belum di CLEARING', 'Telegram', 'Qty beda', 'Voucher qty beda (laporan→CLEARING)']])
         .setFontWeight('bold').setBackground('#d5eef0');
       sh.setFrozenRows(1); sh.setColumnWidths(1, 2, 150); sh.setColumnWidth(8, 360); sh.setColumnWidth(9, 220);
     }
+    if (!String(sh.getRange(1, 10).getValue())) sh.getRange(1, 10, 1, 2).setValues([['Qty beda', 'Voucher qty beda (laporan→CLEARING)']]).setFontWeight('bold').setBackground('#d5eef0');   // sheet lama (9 kolom)
     const st = { sent: 'Terkirim ke ' + (tg.n || 0) + ' chat' + (tg.err ? ' (gagal: ' + tg.err + ')' : ''), fail: 'GAGAL: ' + tg.err, off: 'Nonaktif', nocfg: 'Belum diatur' }[tg.state];
     const row = sh.getLastRow() + 1;
-    sh.getRange(row, 1, 1, 9).setNumberFormats([['@', '@', '0', '0', '0', '0', '0.0%', '@', '@']])
-      .setValues([[at, String(p.file || '').slice(0, 150), tot, ok, no, of, tot ? ok / tot : 0, noList, st]]);
+    sh.getRange(row, 1, 1, 11).setNumberFormats([['@', '@', '0', '0', '0', '0', '0.0%', '@', '@', '0', '@']])
+      .setValues([[at, String(p.file || '').slice(0, 150), tot, ok, no, of, tot ? ok / tot : 0, noList, st, qd, qdList]]);
     P.setProperty('TG_CLR_SIG', sig);
-    try { log_('Simpan Clearing', TG_SHEET, tot, ok + ' cocok, ' + no + ' belum · Telegram: ' + tg.state); } catch (e) {}
+    try { log_('Simpan Clearing', TG_SHEET, tot, ok + ' cocok, ' + no + ' belum, ' + qd + ' qty beda · Telegram: ' + tg.state); } catch (e) {}
     return { saved: true, at: at, tg: tg };
   } finally {
     lock.releaseLock();
