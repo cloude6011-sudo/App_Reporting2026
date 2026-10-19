@@ -712,6 +712,18 @@ html.dk .okc path{stroke:#4ade80}
 .flow span.cur{color:var(--pri);border-color:var(--pri);font-weight:700}.flow span.cur i{background:var(--pri);color:var(--onp)}
 html.dk .flow span.ok{background:#052e16;color:#86efac;border-color:#166534}
 .shr{display:grid;gap:.5rem;margin-top:.6rem}
+
+.pick{display:flex;align-items:center;gap:.5rem;width:100%;min-height:2.7rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:.8rem;padding:.35rem .8rem;font-size:.95rem;text-align:left;margin:.1rem 0 .55rem;box-shadow:var(--sh)}
+.pick span{color:var(--mute);white-space:nowrap}.pick b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pick i{font-style:normal;color:var(--mute)}
+.step{display:flex;align-items:center;gap:.4rem;margin:.1rem 0 .55rem}.step .pick{margin:0;flex:1;justify-content:center}
+.step>button:not(.pick){width:2.7rem;height:2.7rem;flex:0 0 auto;border:1px solid var(--line);background:var(--card);border-radius:.8rem;font-size:1.4rem;line-height:1;color:var(--pri)}
+.step>button:disabled{opacity:.3}
+.pl{display:grid;gap:.35rem;max-height:60vh;overflow:auto;margin-top:.6rem;-webkit-overflow-scrolling:touch}
+.po{display:flex;justify-content:space-between;align-items:center;min-height:2.9rem;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:.8rem;padding:.4rem .9rem;font-size:1rem;text-align:left}
+.po.on{border-color:var(--pri);background:var(--prib);color:var(--pri);font-weight:700}.po i{font-style:normal}
+.bar{transition:transform .28s ease}.stk{transition:top .28s ease}
+body.bar-hide .bar{transform:translateY(-100%)}body.bar-hide .stk{top:env(safe-area-inset-top,0px)}
+nav{transition:transform .3s cubic-bezier(.2,.9,.3,1)}.nbg{transition:opacity .25s}
 </style></head><body>
 <div id="root"><div class="boot"><div class="spin"></div>Memuat aplikasi…<div class="skel"></div><div class="skel" style="opacity:.7"></div><div class="skel" style="opacity:.45"></div></div></div>
 <script>window.__VIEW=false/*__MODE__*/</script><script>try{if(/[?&]v=dash\b/.test(location.search))window.__VIEW=true}catch(e){}</script>
@@ -1417,7 +1429,7 @@ function Header(){const ini=((M.meta.pelapor||'').trim()[0]||'W').toUpperCase();
  return html`<header className="bar"><button className="hb" onClick=${()=>setMenu(!MENU)} aria-label="Menu" aria-expanded=${MENU}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><button className="av" onClick=${()=>go('home')} aria-label="Ke Beranda">${ini}</button><b role="heading" aria-level="1">${VIEW&&TAB=='dash'?(M.meta.area||'KPI WMS')+' · Dashboard':TITLES[TAB]}</b><button className=${'sy'+(SYNC=='busy'?' spin':'')+(SYNC=='err'?' err':'')+(SYNC=='wait'?' wt':'')} onClick=${syncNow} aria-label=${'Sinkron data: '+STL[SYNC]} title=${STL[SYNC]}><span className="ic">${SYNCI[SYNC]}</span><span className="lb">${STL[SYNC]}</span></button></header>`}
 const NI={tg:'M22 3 2 11l6 2.5L10 20l3.5-4 5 3.5zM8 13.5 18 6',sync:'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5',home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',rak:'M3 4h18v5H3zM5 9v10h14V9M10 13h4',muat:'M1 6h13v10H1zM14 10h4l3 3v3h-7',lap:'M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5M8 13h8M8 17h6',dash:'M4 20V11M10 20V4M16 20v-6M22 20H2',clr:'M9 12l2 2 4-4M12 3l8 3v6c0 4.5-3.2 7.7-8 9-4.8-1.3-8-4.5-8-9V6z'};
 function Nav(){const T=VIEW?[['dash','Dashboard'],['lap','Laporan']]:[['home','Beranda'],['rak','Cek Rak'],['muat','Muat'],['clr','Clearing'],['dash','Dashboard'],['lap','Laporan']];
- return html`<${F0}><div className=${'nbg'+(MENU?' on':'')} onClick=${()=>setMenu(false)}></div><nav aria-label="Menu utama" className=${MENU?'open':''}><div className="nbrand"><b>WMS Warehouse</b><span>${M.meta.area||''}</span></div>${T.map(([k,l])=>html`<button key=${k} className=${TAB==k?'on':''} aria-current=${TAB==k?'page':null} onClick=${()=>go(k)}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI[k]}/>${k=='muat'?html`<circle cx="5.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>`:null}</svg></i>${l}</button>`)}${VIEW?null:html`<div className="nsep"></div><button onClick=${openTg}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 3 2 11l6 2.5L10 20l3.5-4 5 3.5zM8 13.5 18 6"/></svg></i>Telegram</button><button onClick=${()=>{setMenu(false);syncNow()}}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI.sync}/></svg></i>Sinkron data</button>`}</nav><//>`}
+ return html`<${F0}><div className=${'nbg'+(MENU?' on':'')} onClick=${()=>setMenu(false)}></div><nav aria-label="Menu utama" className=${MENU?'open':''}><div className="nbrand"><b>WMS Warehouse</b><span>${M.meta.area||''}</span></div>${T.map(([k,l])=>html`<button key=${k} className=${TAB==k?'on':''} aria-current=${TAB==k?'page':null} onClick=${()=>go(k)}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI[k]}/>${k=='muat'?html`<circle cx="5.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>`:null}</svg></i>${l}</button>`)}${VIEW?null:html`<div className="nsep"></div><button onClick=${()=>{setMenu(false);syncNow()}}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI.sync}/></svg></i>Sinkron data</button>`}</nav><//>`}
 function Toast(){return html`<div aria-live="polite" role="status">${TOASTM?html`<div id="toast" className=${/^(✅|✓)/.test(TOASTM)?'ok':''}>${TOASTM}</div>`:null}</div>`}
 function Sheet(){const ref=useRef(),gy=useRef(null),open=!!SHEET;
  useEffect(()=>{if(!open)return;const prev=document.activeElement,el=ref.current;if(el){el.setAttribute('tabindex','-1');try{el.focus({preventScroll:true})}catch(e){}}
@@ -1434,6 +1446,13 @@ function Chips({items,cur,onPick}){const ref=useRef();
  useEffect(()=>{const c=ref.current,o=c&&c.querySelector('.on');if(o&&c.clientWidth)c.scrollLeft=o.offsetLeft-(c.clientWidth-o.offsetWidth)/2},[cur,items.length]);
  return html`<div className="chips" ref=${ref}>${items.map(([k,l])=>html`<button key=${k} className=${'chip'+(cur==k?' on':'')} aria-pressed=${cur==k} onClick=${()=>onPick(k)}>${l}</button>`)}</div>`}
 const Seg=({items,cur,onPick})=>html`<div className="seg">${items.map(([k,l])=>html`<button key=${k} className=${cur==k?'on':''} aria-pressed=${cur==k} onClick=${()=>onPick(k)}>${l}</button>`)}</div>`;
+/* ---- filter ringkas: satu tombol yang membuka daftar pilihan (pengganti deretan chip) ---- */
+function Pick({title,pre,ph,items,cur,onPick,rev}){
+ const it=items.find(x=>String(x[0])===String(cur)),lab=it?it[1]:(ph||'Pilih'),list=rev?items.slice().reverse():items;
+ return html`<button className="pick" type="button" aria-haspopup="listbox" onClick=${()=>openSheet(()=>html`<h3>${title}</h3><div className="pl" role="listbox">${list.map(([k,l])=>html`<button key=${k} type="button" role="option" aria-selected=${String(cur)===String(k)} className=${'po'+(String(cur)===String(k)?' on':'')} onClick=${()=>{closeSheet();onPick(k)}}>${l}${String(cur)===String(k)?html`<i>✓</i>`:null}</button>`)}</div>`)}><span>${pre||title}</span><b>${lab}</b><i>▾</i></button>`}
+function Stepper({items,cur,onPick,title,rev}){
+ const i=items.findIndex(x=>String(x[0])===String(cur));
+ return html`<div className="step"><button type="button" aria-label="Sebelumnya" disabled=${i<=0} onClick=${()=>onPick(items[i-1][0])}>‹</button><${Pick} title=${title} items=${items} cur=${cur} onPick=${onPick} rev=${rev}/><button type="button" aria-label="Berikutnya" disabled=${i<0||i>=items.length-1} onClick=${()=>onPick(items[i+1][0])}>›</button></div>`}
 const Fold=({id,title,children})=>html`<details className="card fold" open=${!!DET[id]} onToggle=${e=>{DET[id]=e.target.open}}><summary>${title}</summary>${children}</details>`;
 const Box=({t,tot,w,n})=>html`<div className="box"><h4>${t}</h4><div className="ln"><span>Total</span><b>${tot||'–'}</b></div><div className="ln"><span>Diproses WMS</span><b style=${{color:'var(--pri)'}}>${w} <small>(${pct1(w,tot)})</small></b></div><div className="ln"><span>Tidak WMS</span><b style=${{color:n?'var(--bed)':'var(--ok)'}}>${tot?n:'–'} <small>(${pct1(n,tot)})</small></b></div></div>`;
 let RLIM=60,RLK='';const lim=(l,k)=>{if(RLK!==k){RLK=k;RLIM=60}return l.slice(0,RLIM)};
@@ -1524,7 +1543,7 @@ function Rak(){const m=rsum(),md=RM(),st=md=='stock';const SPS=SAMPS();
  return html`<${F0}>
   <${RakTop}/><${RakSave}/>
   <div className="stk"><div className="row"><input type="search" enterKeyHint="search" autoComplete="off" placeholder=${st?'Cari item / kode':'Cari bin / kode / nama'} aria-label="Cari" value=${SQ} onChange=${e=>{SQ=e.target.value;emit()}}/><button className="btn" style=${{flex:'0 0 auto'}} onClick=${()=>openSheet(()=>html`<${BinSheet}/>`)}>＋ Bin</button><button className="btn ibtn" aria-label="Data dan pengaturan" title="Data dan pengaturan" style=${{flex:'0 0 auto'}} onClick=${()=>openSheet(()=>html`<${DataSheet}/>`)}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg></button></div>
-   <${Chips} items=${F} cur=${RF} onPick=${v=>{RF=v;emit()}}/></div>
+   <${Pick} title="Filter cek rak" pre="Filter" items=${F} cur=${RF} onPick=${v=>{RF=v;emit()}}/></div>
   ${list.length?html`${lim(list,SQ+'|'+RF+'|'+st).map(r=>st?html`<${StockCard} key=${r.kode} x=${r}/>`:html`<${RakCard} key=${r.rak} r=${r}/>`)}${list.length>RLIM?html`<button className="btn block more" onClick=${()=>{RLIM+=60;emit()}}>Tampilkan ${Math.min(60,list.length-RLIM)} lagi (${list.length-RLIM} tersisa)</button>`:null}`:html`<div className="empty"><span className="ei">🔎</span>Tidak ada data</div>`}
   <${RakSaveBar}/>
  <//>`}
@@ -1597,7 +1616,7 @@ function MuatSave({d}){const sv=d?SV.muat[d]:null;
  return html`<${F0}>${d?html`<div className="mon"><div className=${sv?'g':'w'}><i>${sv?'🔒':'🆕'}</i><span><b>TANGGAL ${isoD(d)}</b>${sv?'Tersimpan di Sheet ('+sv+'). Simpan lagi akan menimpa baris tanggal ini, bukan menambah.':'Belum tersimpan di Sheet.'}</span></div></div>`:null}
  <button className="btn pri block" disabled=${RKB} onClick=${saveMuatSheet}>${RKB?'Menyimpan…':'Simpan rekap muat ke Sheet'}</button><//>`}
 function DayHead({ds}){const D=M.dates[DAY];
- return html`<${F0}><${Chips} cur=${DAY} onPick=${d=>{DAY=d;FILT='all';SPMN=50;emit()}} items=${ds.slice().reverse().map(d=>[d,dayName(d).slice(0,3)+' '+isoD(d).slice(0,5)])}/>
+ return html`<${F0}><${Stepper} title="Pilih tanggal" cur=${DAY} onPick=${d=>{DAY=d;FILT='all';SPMN=50;emit()}} rev=${1} items=${ds.map(d=>[d,dayName(d).slice(0,3)+' '+isoD(d).slice(0,5)])}/>
  <div className="card"><div className="mute">${longD(DAY)} · ${D.file||''}</div>
   <div className="row"><div><label className="l">Total mobil</label><input type="number" inputMode="numeric" min="0" value=${D.tMob||''} placeholder="mis. 23" onChange=${e=>{D.tMob=e.target.value;syncReasons();persist('muat');emit()}}/></div>
   </div><div className="mute">Total SPM otomatis = total mobil. Hitungan WMS per No SPM, bukan per nopol (nopol Mile App kadang tidak muncul).</div>
@@ -1614,13 +1633,13 @@ function DayBody(){const S=statsDay(DAY),D=M.dates[DAY];
   ${(S.tMob&&S.notMob>0)||(D.reasons||[]).length?html`<div className="card"><div className="row mid"><h3>Tidak diproses WMS (${S.notMob})</h3><button className="btn sm" onClick=${()=>{(D.reasons=D.reasons||[]).push(blankR());persist('muat');emit()}}>＋ Tambah</button></div><${Reasons}/></div>`:null}
   <${Fold} id="pic" title="Per PIC Muat"><${PicList} pics=${S.pics}/><div className="wk"><span className="mute">PIC Check:</span>${S.chks.map(c=>c.pending?html`<span key=${c.pic} className="pill p-mix">Belum dicek ${c.spm}</span>`:html`<span key=${c.pic}><b>${c.pic}</b> ${c.spm}</span>`)}</div><//>
   <${SelBody} dates=${[DAY]} sc="d" title=${'SKU selisih per PIC · '+isoD(DAY)}/>
-  <${Fold} id="spm" title=${'Detail per No SPM ('+list.length+')'}><${Chips} items=${FL} cur=${FILT} onPick=${v=>{FILT=v;SPMN=50;emit()}}/>
+  <${Fold} id="spm" title=${'Detail per No SPM ('+list.length+')'}><${Pick} title="Filter SPM" pre="Filter" items=${FL} cur=${FILT} onPick=${v=>{FILT=v;SPMN=50;emit()}}/>
    ${list.slice(0,SPMN).map(s=>{const d=s.qtyMuat-s.qtySpm;return html`<div className="spm" key=${s.spm}><div className="t"><b>${s.spm}</b>${pill[s.status]}</div><div>${s.ship}</div><div className="m">${s.nopol?s.nopol+' · ':''}${s.pic} · ${hm(s.start)}–${hm(s.end)}${s.dur!=null?' ('+s.dur+' mnt)':''}</div><div className="m">${s.lines} item (${s.ok} OK${s.copy?', '+s.copy+' copy':''}) · muat ${fmt(s.qtyMuat)}/${fmt(s.qtySpm)}${d<0?html` <b className="bad-t">(${fmt(d)})</b>`:''} · ${s.checked?'cek: '+s.checker:html`<b className="warn-t">belum dicek</b>`}</div></div>`})}
    ${list.length?null:html`<div className="empty">Tidak ada SPM</div>`}
    ${list.length>SPMN?html`<button className="btn block" onClick=${()=>{SPMN=1e9;emit()}}>Tampilkan semua (${list.length})</button>`:null}<//>
  <//>`}
 function WeekHead({ds,weeks}){
- return html`<${F0}><${Chips} cur=${WEEK} onPick=${w=>{WEEK=w;emit()}} items=${weeks.map(w=>[w,weekLabel(w)])}/>
+ return html`<${F0}><${Stepper} title="Pilih minggu" cur=${WEEK} onPick=${w=>{WEEK=w;emit()}} rev=${1} items=${weeks.slice().reverse().map(w=>[w,weekLabel(w)])}/>
  <div className="card"><h3>Total mobil dan SPM per tanggal</h3><div className="row"><button className="btn sm" onClick=${()=>srcBtn(ds.filter(d=>monday(d)===WEEK))}>Ambil dari sheet sumber</button><button className="btn sm" onClick=${openSrc}>Atur sumber</button></div><div className="row"><button className="btn sm" onClick=${()=>openMobil(ds.filter(d=>monday(d)===WEEK))}>Isi total mobil minggu ini</button></div><${MuatSave}/>${ds.filter(d=>monday(d)===WEEK).map(d=>html`<div className="dayr" key=${d}><div className="t"><b>${dayName(d).slice(0,3)} ${isoD(d).slice(0,5)}</b><span className="mute">SPM WMS: ${new Set(M.dates[d].rows.map(r=>r.spm)).size}</span></div>
    <div className="pair"><div><label className="l">Total mobil (= total SPM)</label><input type="number" inputMode="numeric" value=${M.dates[d].tMob||''} onChange=${e=>{M.dates[d].tMob=e.target.value;syncReasons(d);persist('muat');emit()}}/></div></div></div>`)}</div><//>`}
 function WeekBody(){const W=statsWeek(WEEK),T=W.T,rc=sortRc(W.rc),rcT=rc.reduce((a,[,v])=>a+v,0);
@@ -1788,8 +1807,8 @@ function Dash(){const ds=Object.keys(M.dates).sort();
  return html`<div className="dash">
   ${top}
   <${Seg} cur=${DM} onPick=${v=>{DM=v;DK=null;emit()}} items=${[['day','Harian'],['week','Mingguan'],['month','Bulanan'],['all','Semua']]}/>
-  ${opts.length?html`<${Chips} items=${opts} cur=${DK} onPick=${v=>{DK=v;emit()}}/>`:null}
-  <div className="stk" role="navigation" aria-label="Lompat ke bagian dashboard"><${Chips} items=${[['dj_muat','Muat'],['dj_sel','Selisih SKU'],['dj_rak','Rak'],['dj_pic','Per PIC']]} cur=${null} onPick=${jumpTo}/></div>
+  ${opts.length?html`<${Pick} title="Pilih periode" pre="Periode" items=${opts} cur=${DK} onPick=${v=>{DK=v;emit()}}/>`:null}
+  <div className="stk" role="navigation" aria-label="Lompat ke bagian dashboard"><${Pick} title="Lompat ke bagian" pre="Lompat ke" ph="pilih bagian…" items=${[['dj_muat','Muat'],['dj_sel','Selisih SKU'],['dj_rak','Rak'],['dj_pic','Per PIC']]} cur=${null} onPick=${jumpTo}/></div>
   <${Sec} t="Ringkasan" s=${perL+' · '+dates.length+' hari data'}/>
   <div className="k4 k6"><${K4} k="Input aktual" v=${T.spmWms?fp(okN,T.spmWms):'–'} s=${html`<span>Target ${target}%${T.spmWms?html` · ${okP>=target?'+':''}${(okP-target).toFixed(1).replace('.',',')} poin`:null}${pOk!=null&&T.spmWms?html`<br/><${Dl} d=${okP-pOk} lbl=${pvL}/>`:null}</span>`} c=${st||''}/><${K4} k="Item copy rekom." v=${fp(T.copy,T.lines)} s=${html`<span>${fmt(T.copy)} dari ${fmt(T.lines)} item ${pCp!=null&&T.lines?html`<br/><${Dl} d=${-(pc(T.copy,T.lines)-pCp)} lbl=${pvL}/>`:null}</span>`} c="bed"/><${K4} k="Mobil (SPM) diproses WMS" v=${T.tMob?fp(T.mobC,T.tMob):'–'} s=${html`<span>${T.tMob?T.mobC+' dari '+T.tMob+' mobil':'total mobil belum diisi'} ${pMob!=null&&T.tMob?html`<br/><${Dl} d=${pc(T.mobC,T.tMob)-pMob} lbl=${pvL}/>`:null}</span>`} c="pri"/><${K4} k="Mobil masuk" v=${MA.days?fmt(MA.m):'–'} s=${MA.days?(T.tMob?'dari '+fmt(T.tMob)+' total mobil':MA.days+' hari terisi'):'belum diisi'}/>
    <${K4} k="Masuk belum diproses WMS" v=${MA.days?fmt(MA.belum):'–'} s=${MA.days?'mobil masuk tanpa SPM di WMS':'isi mobil masuk dulu'} c=${MA.days?(MA.belum?'sel':'ok'):''}/>
@@ -1951,7 +1970,7 @@ function Clr(){
    <div className="prog"><div style=${{width:(tot?m.ok.length/tot*100:0)+'%'}}></div></div>
    <div className="cact"><button className="btn pri sm" disabled=${!!CL.sv.busy} onClick=${()=>clSave(false)}>${CL.sv.busy?'⏳ Menyimpan…':'💾 Simpan'}</button><button className="btn sm" disabled=${!!CL.sv.busy} onClick=${()=>ask('Reset upload?','Hasil upload ini dikosongkan. Data di Sheet tidak berubah.','Reset',()=>{clReset();toast('Upload dikosongkan')},1)}>↺ Reset</button><button className="btn sm" onClick=${async()=>{await copyTxt(clrText());toast('Laporan disalin')}}>Salin</button>${TGBTN(()=>tgKirim(clrText(),'Laporan Clearing'),true)}<button className="btn sm" onClick=${()=>window.open('https://wa.me/?text='+encodeURIComponent(clrText()),'_blank')}>WhatsApp</button><button className="btn sm" onClick=${async()=>{try{await navigator.share({title:'Laporan Clearing',text:clrText()})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Bagikan</button><button className="btn sm" onClick=${clExport}>⬇ Excel</button></div>
    <div className="mute" style=${{fontSize:'.8rem',margin:'.1rem 0 .3rem'}}>${CL.sv.err?html`<span style=${{color:'var(--bed)'}}>⚠️ Gagal simpan: ${CL.sv.err}</span>`:CL.sv.at?(CL.sv.tg&&CL.sv.tg.state=='fail'?'⚠️':'✓')+' Disimpan '+CL.sv.at+' · '+CL.sv.msg:'Simpan = catat hasil di Sheet'+(CL.tg?(CL.tg.on?' + kirim laporan ke Telegram ('+CL.tg.n+' chat)':CL.tg.set?' · Telegram nonaktif':' · Telegram belum diatur'):'')} <button className="btn sm" style=${{minHeight:'1.8rem',padding:'.1rem .5rem',marginLeft:'.3rem'}} onClick=${openTg}>⚙ Telegram</button></div>
-   <${Chips} items=${[['all','Semua ('+cnt.all+')'],['no','Belum di CLEARING ('+cnt.no+')'],['ok','Cocok ('+cnt.ok+')'],['of','Hanya di CLEARING ('+cnt.of+')']]} cur=${CL.f} onPick=${k=>{CL.f=k;CL.lim=60;emit()}}/>
+   <${Pick} title="Filter hasil" pre="Tampilkan" items=${[['all','Semua ('+cnt.all+')'],['no','Belum di CLEARING ('+cnt.no+')'],['ok','Cocok ('+cnt.ok+')'],['of','Hanya di CLEARING ('+cnt.of+')']]} cur=${CL.f} onPick=${k=>{CL.f=k;CL.lim=60;emit()}}/>
    <input type="search" placeholder="Cari voucher / item…" value=${CL.q} onInput=${e=>{CL.q=e.target.value;CL.lim=60;emit()}}/>
    ${pg.map(x=>html`<div className=${'cr '+x.k} key=${x.k+x.v}>
      <div className="h"><b>${x.v}</b><span className="tag">${TAGS[x.k]}</span></div>
@@ -1996,6 +2015,7 @@ function App(){const [,tick]=useReducer(x=>x+1,0);useEffect(()=>{linkLabels()});
 function boot(){
  applyFS();applyTheme();try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(TH=='auto')applyTheme()})}catch(e){}
  setSync(GS?'ok':'local');LASTDAY=today();
+ {let ly=window.scrollY||0,tk=false;window.addEventListener('scroll',()=>{if(tk)return;tk=true;requestAnimationFrame(()=>{const y=window.scrollY||0,B=document.body;if(y<80||y<ly-6||MENU||SHEET)B.classList.remove('bar-hide');else if(y>ly+6)B.classList.add('bar-hide');ly=y;tk=false})},{passive:true})}
  {const u=document.createElement('button');u.id='totop';u.type='button';u.setAttribute('aria-label','Kembali ke atas');u.textContent='↑';u.onclick=()=>window.scrollTo({top:0,behavior:'smooth'});document.body.appendChild(u);let on=false;window.addEventListener('scroll',()=>{const v=(window.scrollY||0)>700;if(v!==on){on=v;u.classList.toggle('show',v)}},{passive:true})}
 document.body.classList.toggle('view',VIEW);
  if(!VIEW&&GS)setInterval(()=>{if(!document.hidden&&!SHEET&&!Object.keys(DIRTY).length)pull(true)},180000);
