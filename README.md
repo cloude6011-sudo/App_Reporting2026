@@ -56,6 +56,14 @@ Upload laporan voucher di tab Clearing, lalu dicocokkan dengan tab CLEARING. Lap
 
 No lori dan PIC diambil otomatis dari kolom file upload atau tab CLEARING bila headernya bernama mis. `No Lori`/`Nopol`/`Plat`/`Kendaraan` dan `PIC`/`Petugas`/`Checker`/`Operator`. Bila tidak ada, aplikasi memperkirakannya dari data Muat (kode item, qty, dan tanggal yang berdekatan) dan memberi label "perkiraan dari data Muat".
 
+### Presisi pencocokan voucher
+- Nomor voucher dibaca tahan format: apostrof, spasi, awalan huruf/`No.`, sufiks `-01`, banyak nomor dalam satu sel, nomor terselip (`12-1000009`), dan angka 0 di depan yang hilang.
+- Kolom voucher dipilih otomatis berdasarkan jumlah yang benar-benar cocok (bukan hanya judul kolom).
+- Voucher dengan beberapa baris item dicocokkan per kode item.
+- Sebelum menyatakan "belum ada", seluruh kolom CLEARING dicari. Bila nomor ada di kolom lain, laporan menyebut kolom dan barisnya.
+- Saran **salah ketik** hanya muncul bila nomor mirip itu belum dipakai di laporan dan kode item tidak bertentangan; tingkat keyakinannya ditampilkan (`item sama` / `qty sama` / `belum terverifikasi`).
+- Tombol **✔ Validasi: benar salah ketik** mengonfirmasi saran itu. Voucher lalu dihitung cocok (persentase bisa menjadi 100%), tersimpan di perangkat, bisa dibatalkan, dan dicatat di bagian F laporan.
+
 ## Catatan
 - Hanya boleh ada satu `onOpen`; letaknya di `Riset_Lengkap.gs`.
 - Script properties yang dipakai: `APP_PIN`, `VIEW_PIN`, `ALLOWED_EMAILS`, `SRC_ALLOW`, `SRC_ID`, `TG_TOKEN`, `TG_CHAT`, `TG_ON` (semua diisi di Project Settings, bukan di kode).

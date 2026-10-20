@@ -1923,7 +1923,13 @@ function Lap(){const ds=Object.keys(M.dates).sort();if(!DAY||!M.dates[DAY])DAY=d
 
 /* ---------- CLEARING: cocokkan No Voucher (7 angka) hasil import dengan tab CLEARING ---------- */
 let CL={data:null,busy:false,err:'',imp:null,fn:'',col:-1,manual:false,dcol:-1,dman:false,sv:{},tg:null,tgAsked:false,f:'all',q:'',lim:60,loaded:false};
-const v7=x=>{const m=String(x==null?'':x).trim().match(/^(\d{7})/);return m?m[1]:''};
+/* nomor voucher 7 angka dari sel: abaikan awalan (apostrof, huruf, spasi, "No."), boleh banyak nomor dalam 1 sel,
+   sufiks seperti -01 diabaikan, dan nomor yang terselip (mis. 12-1000009) tetap terbaca */
+function v7all(x){const t=String(x==null?'':x),out=[];
+ t.split(/[\s,;\/|]+/).forEach(p=>{const m=p.replace(/^[^\d]+/,'').match(/^(\d{7})/);if(m&&out.indexOf(m[1])<0)out.push(m[1])});
+ if(!out.length){const re=/(^|\D)(\d{7})(?!\d)/g;let q;while((q=re.exec(t))){if(out.indexOf(q[2])<0)out.push(q[2])}}
+ return out}
+const v7=x=>{const a=v7all(x);return a.length?a[0]:''};
 const tglMs=x=>{x=String(x==null?'':x).trim();if(!x)return null;let y,m,d,mm=x.match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
  if(mm){y=+mm[1];m=+mm[2];d=+mm[3]}else if(mm=x.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/)){d=+mm[1];m=+mm[2];y=+mm[3];if(y<100)y+=2000}else return null;
  if(m<1||m>12||d<1||d>31)return null;const t=x.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);return Date.UTC(y,m-1,d,t?+t[1]:0,t?+t[2]:0,t?+(t[3]||0):0)};
@@ -1937,7 +1943,11 @@ const clTg=z=>z&&z.t!=null?isoD(new Date(z.t).toISOString().slice(0,10)).slice(0
 /* analisa kemungkinan penyebab: voucher tidak ada di CLEARING / qty beda / kode item beda */
 function clAnalisa(x){
  const A=[];
- if(x.k==='no'){if(x.mirip)A.push('mirip nomor '+x.mirip+' yang ada di CLEARING → kemungkinan salah ketik nomor voucher');else A.push('belum diinput ke CLEARING atau nomor voucher salah → cek hasil counting dan input CLEARING');
+ if(x.k==='no'){
+  if(x.where)A.push('nomor ini ADA di CLEARING pada kolom “'+x.where.h+'” baris '+x.where.r+', bukan di kolom voucher yang dipilih → pilih kolom itu di tab Clearing atau cek format nomor');
+  else if(x.mirip&&x.mc!=='belum terverifikasi')A.push('mirip nomor '+x.mirip+' di CLEARING ('+x.mc+') → kemungkinan salah ketik nomor voucher');
+  else if(x.mirip)A.push('ada nomor mirip '+x.mirip+' di CLEARING, tetapi item/qty belum bisa dipastikan → cek manual, belum tentu salah ketik');
+  else A.push('nomor ini tidak ditemukan di CLEARING (sudah dicari di semua kolom) → belum diinput atau belum dihitung');
   const t=x.o&&tglMs(x.o.Tgl);if(t!=null){const ag=Math.floor((Date.now()-t)/864e5);if(ag>=2)A.push('sudah '+ag+' hari tanpa hasil counting → prioritas dicek');else if(ag<=0)A.push('voucher hari ini → kemungkinan belum selesai dihitung')}
   return A.slice(0,3)}
  if(x.qd){const df=x.q2-x.q1,rt=x.q1>0?x.q2/x.q1:0;
@@ -1947,6 +1957,8 @@ function clAnalisa(x){
   else if(x.q1>0&&(Math.abs(rt-2)<0.001||Math.abs(rt-0.5)<0.001))A.push('qty beda tepat 2× atau ½ → kemungkinan hitung dobel atau salah satuan (pack/pcs)');
   else if(Math.abs(df)<=2)A.push('selisih kecil → kemungkinan salah ketik atau pembulatan');
   else A.push(df<0?'CLEARING lebih kecil → kemungkinan voucher direvisi/dikurangi atau baru sebagian di-clear':'CLEARING lebih besar → kemungkinan voucher ditambah atau laporan memakai qty lama')}
+ if(x.fx)A.push('salah ketik di laporan, sudah divalidasi → CLEARING '+x.fx.to+' ('+x.fx.by+', '+x.fx.at+')');
+ if(x.lz)A.push('nomor di CLEARING kehilangan angka 0 di depan (format angka) → tetap dianggap cocok');
  if(x.idf)A.push('kode item beda (laporan '+x.ui+' vs CLEARING '+x.ci+') → kemungkinan salah item atau voucher tertukar');
  if(x.dup>1&&(!x.hist||new Set(x.hist.map(z=>z.q)).size<=1))A.push('voucher diinput '+x.dup+'× dengan qty sama di CLEARING → cek input dobel');
  return A.slice(0,4)}
@@ -1956,7 +1968,10 @@ function clAutoQ(){const d=CL.data;if(!d||!d.headers||!d.headers.length){CL.qcol
  if(!(CL.iman&&CL.icol>=0)){CL.icol=H.findIndex((h,c)=>c!==CL.col&&/kode\s*item|item\s*code|kode\s*barang|kode\s*material|^sku$/i.test(String(h).trim()))}}
 function clAuto(){const d=CL.data;if(!d||!d.headers||!d.headers.length){CL.col=-1;return}if(CL.manual&&CL.col>=0)return;
  let i=d.headers.findIndex(h=>/voucher/i.test(h)&&/7|angka/i.test(h));if(i<0)i=d.headers.findIndex(h=>/voucher/i.test(h));
- if(i<0&&CL.imp){let best=0;d.headers.forEach((h,c)=>{let n=0;d.rows.forEach(r=>{if(CL.imp.map[v7(r[c])])n++});if(n>best){best=n;i=c}})}
+ if(CL.imp){const hit=c=>{let n=0;d.rows.forEach(r=>{if(v7all(r[c]).some(v=>CL.imp.map[v]))n++});return n};
+  const hs=d.headers.map((h,c)=>hit(c)),mx=Math.max(0,...hs);
+  /* kolom berjudul "voucher" dipertahankan bila hasilnya sebanding; kalau kolom lain jauh lebih banyak cocok, pakai itu */
+  if(mx>0&&(i<0||hs[i]<mx*0.9))i=hs.indexOf(mx)}
  CL.col=i;clAutoD();clAutoQ()}
 function clLoad(refresh){if(!GS){CL.err='Data CLEARING hanya tersedia saat tersambung ke Apps Script';emit();return}
  CL.busy=true;CL.err='';emit();
@@ -1969,24 +1984,44 @@ async function clImport(f){if(!f)return;
   const H=aoa[hi].map(c=>String(c).trim()),ix=n=>H.findIndex(h=>h.toLowerCase()===n.toLowerCase()),cv=ix('No Voucher');
   const pick=['Kode Item','Nama Item','Qty','Status Voucher','Posisi','Rak','Tgl','Shift','Mesin'].filter(k=>ix(k)>=0);
   const jl=H.findIndex(h=>CLAL.lori.test(h)),jp=H.findIndex(h=>CLAL.pic.test(h));
-  const list=[],map={};let bad=0,dup=0;
+  const list=[],map={};let bad=0,dup=0,multi=0;
+  const mkO=(v,r)=>{const o={v};pick.forEach(k=>{const j=ix(k);o[k]=String(r[j]==null?'':r[j])});if(jl>=0)o.Lori=String(r[jl]==null?'':r[jl]).trim();if(jp>=0)o.PIC=String(r[jp]==null?'':r[jp]).trim();return o};
   aoa.slice(hi+1).forEach(r=>{const raw=r[cv];if(raw===''||raw==null)return;const v=v7(raw);if(!v){bad++;return}
-   if(map[v]){dup++;return}
-   const o={v};pick.forEach(k=>{const j=ix(k);o[k]=String(r[j]==null?'':r[j])});if(jl>=0)o.Lori=String(r[jl]==null?'':r[jl]).trim();if(jp>=0)o.PIC=String(r[jp]==null?'':r[jp]).trim();map[v]=o;list.push(o)});
-  CL.imp={list,map,bad,dup,cols:pick.concat(jl>=0?['Lori']:[],jp>=0?['PIC']:[]),hl:jl>=0?H[jl]:'',hp:jp>=0?H[jp]:''};CL.sv={};CL.fn=f.name;CL.f='all';CL.q='';CL.lim=60;CL.manual=false;clAuto();emit();
+   if(map[v]){const ki=String(r[ix('Kode Item')]==null?'':r[ix('Kode Item')]).trim().toLowerCase();
+    if(ki&&!list.some(z=>z.v===v&&String(z['Kode Item']||'').trim().toLowerCase()===ki)){const o2=mkO(v,r);o2.multi=1;list.push(o2);multi++}else dup++;return}
+   const o=mkO(v,r);map[v]=o;list.push(o)});
+  CL.imp={list,map,bad,dup,multi,cols:pick.concat(jl>=0?['Lori']:[],jp>=0?['PIC']:[]),hl:jl>=0?H[jl]:'',hp:jp>=0?H[jp]:''};CL.sv={};CL.fn=f.name;CL.f='all';CL.q='';CL.lim=60;CL.manual=false;clAuto();emit();
   toast(list.length+' voucher dibaca'+(bad?' · '+bad+' baris bukan 7 angka':'')+(dup?' · '+dup+' dobel digabung':''))}
  catch(e){toast('Gagal membaca file: '+(e.message||e))}}
+/* validasi manual "benar salah ketik": nomor di laporan = nomor lain di CLEARING -> dihitung cocok (tersimpan di perangkat) */
+let CLFIX=(()=>{try{return LS.g('wms_clfix')||{}}catch(e){return {}}})();
+function clFixSet(v,to){CLFIX[v]={to,by:(R.pet||(M.meta&&M.meta.pelapor)||'-'),at:nowStr()};LS.s('wms_clfix',CLFIX);emit();toast('✅ Divalidasi: '+v+' = '+to+' di CLEARING')}
+function clFixDel(v){delete CLFIX[v];LS.s('wms_clfix',CLFIX);emit();toast('Validasi dibatalkan')}
 function clMatch(){const d=CL.data,I=CL.imp;const newest=a=>{let b=a[a.length-1],bt=CL.dcol>=0?tglMs(d.rows[b][CL.dcol]):null;if(CL.dcol<0)return b;a.forEach(i=>{const t=tglMs(d.rows[i][CL.dcol]);if(t!=null&&(bt==null||t>=bt)){b=i;bt=t}});return b};if(!I||!d||CL.col<0||!I.list.length)return null;
- const M2={};d.rows.forEach((r,i)=>{const v=v7(r[CL.col]);if(v)(M2[v]=M2[v]||[]).push(i)});
+ const M2={},M2z={};d.rows.forEach((r,i)=>{v7all(r[CL.col]).forEach(v=>(M2[v]=M2[v]||[]).push(i));const t=String(r[CL.col]==null?'':r[CL.col]).trim().replace(/^'/,'');if(/^\d{6}$/.test(t))(M2z['0'+t]=M2z['0'+t]||[]).push(i)});
  const qi=CL.qcol!=null&&CL.qcol>=0?CL.qcol:-1,ii=CL.icol!=null&&CL.icol>=0?CL.icol:-1,keys=Object.keys(M2);
  const cx=i=>({lori:CL.lcol>=0?String(d.rows[i][CL.lcol]==null?'':d.rows[i][CL.lcol]).trim():'',pic:CL.pcol>=0?String(d.rows[i][CL.pcol]==null?'':d.rows[i][CL.pcol]).trim():'',item:ii>=0?String(d.rows[i][ii]).trim():'',q:qi>=0?qtyN(d.rows[i][qi]):null});
  const hist=a=>a.map(i=>({i,tgl:CL.dcol>=0?String(d.rows[i][CL.dcol]):'',t:CL.dcol>=0?tglMs(d.rows[i][CL.dcol]):null,q:qi>=0?qtyN(d.rows[i][qi]):null})).sort((p,q)=>(p.t!=null&&q.t!=null?p.t-q.t:0)||p.i-q.i);
- const ok=[],no=[];I.list.forEach(o=>{const hit=M2[o.v];if(!hit){no.push({k:'no',o,v:o.v,rows:[],dup:0,mirip:keys.find(k=>nearV(k,o.v)&&!I.map[k])||''});return}
-  const nw=newest(hit),h=hist(hit),cur=h.find(z=>z.i===nw)||h[h.length-1],pi=h.indexOf(cur),pv=pi>0?h[pi-1]:null,q1=qtyN(o.Qty),q2=cur?cur.q:null,ci=ii>=0?String(d.rows[nw][ii]).trim():'',ui=String(o['Kode Item']||'').trim();
-  ok.push({k:'ok',o,v:o.v,rows:[nw],cl:cx(nw),dup:hit.length,q1,q2,cur,prev:pv,hist:h,qd:q1!=null&&q2!=null&&Math.abs(q1-q2)>1e-6,idf:!!(ci&&ui&&ci.toLowerCase()!==ui.toLowerCase()),ci,ui})});
+ const low=x=>String(x==null?'':x).trim().toLowerCase();
+ /* voucher dengan banyak baris item di CLEARING: bandingkan dengan baris yang kode itemnya sama */
+ const pickR=(a,o)=>{const ui=low(o['Kode Item']);if(ii>=0&&ui){const same=a.filter(i=>low(d.rows[i][ii])===ui);if(same.length)return same}return a};
+ /* nomor yang ada di kolom CLEARING lain (bukan kolom voucher terpilih): dicari hanya bila dibutuhkan */
+ let ALLT=null;const allT=()=>{if(ALLT)return ALLT;ALLT={};d.rows.forEach((r,i)=>r.forEach((c,j)=>{if(j===CL.col)return;const t=String(c==null?'':c);if(t.length<7)return;const re=/(^|\D)(\d{7})(?!\d)/g;let q;while((q=re.exec(t)))(ALLT[q[2]]=ALLT[q[2]]||[]).push({i,j})}));return ALLT};
+ /* saran "salah ketik" hanya bila nomor mirip itu belum terpakai di laporan DAN item-nya tidak bertentangan */
+ const mirip=o=>{const ui=low(o['Kode Item']),q1=qtyN(o.Qty);let best=null;
+  keys.forEach(k=>{if(I.map[k]||!nearV(k,o.v))return;const r=newest(M2[k]),c=cx(r);if(ii>=0&&ui&&low(c.item)&&low(c.item)!==ui)return;
+   const rank=(ii>=0&&ui&&low(c.item)===ui)?'item sama':(q1!=null&&c.q!=null&&Math.abs(q1-c.q)<1e-6?'qty sama':'belum terverifikasi');const w={'item sama':2,'qty sama':1,'belum terverifikasi':0}[rank];if(!best||w>best.w)best={k,rank,w}});return best};
+ const ok=[],no=[],fixedTo={};I.list.forEach(o=>{let hit=M2[o.v],lz=false,fx=null;if(!hit&&o.v[0]==='0'&&M2z[o.v]){hit=M2z[o.v];lz=true}
+  if(!hit&&CLFIX[o.v]&&M2[CLFIX[o.v].to]){hit=M2[CLFIX[o.v].to];fx=Object.assign({v:o.v},CLFIX[o.v]);fixedTo[CLFIX[o.v].to]=1}
+  if(!hit){const x={k:'no',o,v:o.v,rows:[],dup:0,mirip:'',mc:''},el=allT()[o.v];
+   if(el&&el.length){const e=el[0];x.where={h:String(d.headers[e.j]||'kolom '+(e.j+1)),r:e.i+2}}
+   else{const b=mirip(o);if(b){x.mirip=b.k;x.mc=b.rank}}
+   no.push(x);return}
+  const sub=pickR(hit,o),nw=newest(sub),h=hist(sub),cur=h.find(z=>z.i===nw)||h[h.length-1],pi=h.indexOf(cur),pv=pi>0?h[pi-1]:null,q1=qtyN(o.Qty),q2=cur?cur.q:null,ci=ii>=0?String(d.rows[nw][ii]).trim():'',ui=String(o['Kode Item']||'').trim();
+  ok.push({k:'ok',o,v:o.v,rows:[nw],cl:cx(nw),dup:sub.length,lz,fx,q1,q2,cur,prev:pv,hist:h,qd:q1!=null&&q2!=null&&Math.abs(q1-q2)>1e-6,idf:!!(ci&&ui&&ci.toLowerCase()!==ui.toLowerCase()),ci,ui})});
  let lo=Infinity,hi=-Infinity;I.list.forEach(o=>{const n=+o.v;if(n<lo)lo=n;if(n>hi)hi=n});
- const of=[];Object.keys(M2).forEach(v=>{if(!I.map[v]&&+v>=lo&&+v<=hi){const n2=newest(M2[v]);of.push({k:'of',o:null,v,rows:[n2],cx:cx(n2),dup:M2[v].length})}});of.sort((a,b)=>b.v-a.v);
- return{ok,no,of,n:Object.keys(M2).length,qd:ok.filter(x=>x.qd),idf:ok.filter(x=>x.idf),qi,ii}}
+ const of=[];Object.keys(M2).forEach(v=>{if(!I.map[v]&&!fixedTo[v]&&+v>=lo&&+v<=hi){const n2=newest(M2[v]);of.push({k:'of',o:null,v,rows:[n2],cx:cx(n2),dup:M2[v].length})}});of.sort((a,b)=>b.v-a.v);
+ return{ok,no,of,n:Object.keys(M2).length,qd:ok.filter(x=>x.qd),idf:ok.filter(x=>x.idf),lz:ok.filter(x=>x.lz),fx:ok.filter(x=>x.fx),qi,ii}}
 async function clExport(){const m=clMatch();if(!m)return;try{await need('xlsx')}catch(e){return toast(e.message)}
  const d=CL.data,I=CL.imp,H=d.headers,hdr=['Status','No Voucher',...I.cols,'Jumlah baris di CLEARING (dipakai tanggal terakhir)','Qty laporan','Qty CLEARING terbaru','Qty CLEARING sebelumnya','Selisih qty (CLEARING - laporan)','Analisa kemungkinan','No Lori','PIC','Sumber Lori/PIC',...H.map(h=>'CLEARING: '+h)];
  const row=(st,x)=>{const r0=x.rows.length?d.rows[x.rows[0]]:H.map(()=>'');return[st,x.v,...I.cols.map(k=>x.o?x.o[k]:''),x.dup||0,x.q1==null?'':x.q1,x.q2==null?'':x.q2,x.prev&&x.prev.q!=null?x.prev.q:'',x.qd?x.q2-x.q1:'',(x.k==='no'||x.qd||x.idf)?clAnalisa(x).join(' | '):'',...(()=>{const w=clWho(x);return[w.lori,w.pic,w.src||((w.lori||w.pic)?'file / CLEARING':'')]})(),...r0]};
@@ -1999,8 +2034,10 @@ function clrText(){const I=CL.imp,m=clMatch();
  if(!CL.data||!CL.data.rows.length)return'Data CLEARING belum dimuat. Buka tab Clearing lalu tekan Perbarui.';
  if(!m)return'Kolom voucher di CLEARING belum dipilih. Pilih di tab Clearing.';
  const tot=m.ok.length+m.no.length,L=waHead('LAPORAN CLEARING VOUCHER',`File : ${CL.fn||'-'}`),idOnly=m.idf.filter(x=>!x.qd);
- L.push('*A. HASIL PENCOCOKAN (laporan vs hasil counting di CLEARING)*','```',padR('Voucher laporan',20)+padL(tot,7),padR('Sudah di CLEARING',20)+padL(m.ok.length,7),padR('Belum di CLEARING',20)+padL(m.no.length,7),padR('Qty beda',20)+padL(m.qi>=0?m.qd.length:'-',7),...(m.ii>=0?[padR('Kode item beda',20)+padL(m.idf.length,7)]:[]),'-'.repeat(27),padR('% Cocok',20)+padL(pct1(m.ok.length,tot),7),...(m.qi>=0?[padR('% Cocok & qty sama',20)+padL(pct1(m.ok.length-m.qd.length,tot),7)]:[]),'```');
+ L.push('*A. HASIL PENCOCOKAN (laporan vs hasil counting di CLEARING)*','```',padR('Voucher laporan',20)+padL(tot,7),padR('Sudah di CLEARING',20)+padL(m.ok.length,7),padR('Belum di CLEARING',20)+padL(m.no.length,7),padR('Qty beda',20)+padL(m.qi>=0?m.qd.length:'-',7),...(m.ii>=0?[padR('Kode item beda',20)+padL(m.idf.length,7)]:[]),...(m.fx.length?[padR('Divalidasi manual',20)+padL(m.fx.length,7)]:[]),'-'.repeat(27),padR('% Cocok',20)+padL(pct1(m.ok.length,tot),7),...(m.qi>=0?[padR('% Cocok & qty sama',20)+padL(pct1(m.ok.length-m.qd.length,tot),7)]:[]),'```');
  const perlu=m.no.length+(m.qi>=0?m.qd.length:0)+idOnly.length;
+ if(I.multi)L.push('_ℹ️ '+I.multi+' baris item tambahan pada voucher yang sama ikut dicocokkan per kode item._');
+ if(m.lz.length)L.push('_ℹ️ '+m.lz.length+' voucher cocok setelah angka 0 di depan dilengkapi (format angka di CLEARING)._');
  L.push(perlu?`⚠️ *${perlu} voucher perlu dicek*: ${m.no.length} belum ada hasil counting`+(m.qi>=0?` · ${m.qd.length} qty beda`:'')+(idOnly.length?` · ${idOnly.length} kode item beda`:''):'✅ Semua voucher cocok dengan hasil counting');
  if(m.qi<0)L.push('_⚠️ Kolom qty CLEARING belum dipilih, qty belum dibandingkan._');
  const noWho=!m.no.concat(m.qd).some(x=>{const w=clWho(x);return w.lori||w.pic});
@@ -2019,6 +2056,7 @@ function clrText(){const I=CL.imp,m=clMatch();
    clAnalisa(x).forEach(t=>a.push('   ➜ '+t));return a})}
  if(idOnly.length){L.push('',`*D. NO VOUCHER SAMA, KODE ITEM BEDA (${idOnly.length})*`);cap(idOnly,x=>['• '+x.v+' | laporan '+x.ui+' vs CLEARING '+x.ci,who(x)].concat(clAnalisa(x).map(t=>'   ➜ '+t)))}
  if(m.of.length){L.push('',`*E. ADA DI CLEARING, TIDAK ADA DI LAPORAN (${m.of.length})*`,'_Kemungkinan voucher belum masuk laporan upload atau nomor salah ketik._');cap(m.of,x=>{const c=x.cx||{};return['• '+x.v+(c.item?' | Kode '+c.item:'')+(c.q!=null?' | Qty '+fmt(c.q):'')+((c.lori||c.pic)?' | 🚚 '+(c.lori||'-')+' · 👤 '+(c.pic||'-'):'')]},30)}
+ if(m.fx.length){L.push('',`*F. DIVALIDASI MANUAL: BENAR SALAH KETIK (${m.fx.length})*`,'_Nomor di laporan salah ketik, sudah dikonfirmasi dan dihitung cocok._');cap(m.fx,x=>['• '+x.v+' → CLEARING '+x.fx.to+' · divalidasi '+x.fx.by+' ('+x.fx.at+')'],30)}
  return waFoot(L)}
 function clTgLoad(){if(!GS||CL.tgAsked)return;CL.tgAsked=true;GS.withSuccessHandler(r=>{CL.tg=r;emit()}).withFailureHandler(()=>{}).tgStatus()}
 function clReset(){CL.imp=null;CL.fn='';CL.col=-1;CL.manual=false;CL.dcol=-1;CL.dman=false;CL.f='all';CL.q='';CL.lim=60;CL.sv={};emit()}
@@ -2059,9 +2097,11 @@ function Clr(){
    <div className="mute" style=${{fontSize:'.8rem',margin:'.1rem 0 .3rem'}}>${CL.sv.err?html`<span style=${{color:'var(--bed)'}}>⚠️ Gagal simpan: ${CL.sv.err}</span>`:CL.sv.at?(CL.sv.tg&&CL.sv.tg.state=='fail'?'⚠️':'✓')+' Disimpan '+CL.sv.at+' · '+CL.sv.msg:'Simpan = catat hasil di Sheet'+(CL.tg?(CL.tg.on?' + kirim laporan ke Telegram ('+CL.tg.n+' chat)':CL.tg.set?' · Telegram nonaktif':' · Telegram belum diatur'):'')} <button className="btn sm" style=${{minHeight:'1.8rem',padding:'.1rem .5rem',marginLeft:'.3rem'}} onClick=${openTg}>⚙ Telegram</button></div>
    <${Pick} title="Filter hasil" pre="Tampilkan" items=${[['all','Semua ('+cnt.all+')'],['no','Belum di CLEARING ('+cnt.no+')'],['ok','Cocok ('+cnt.ok+')'],['qd','Qty beda ('+cnt.qd+')'],['of','Hanya di CLEARING ('+cnt.of+')']]} cur=${CL.f} onPick=${k=>{CL.f=k;CL.lim=60;emit()}}/>
    <input type="search" placeholder="Cari voucher / item…" value=${CL.q} onInput=${e=>{CL.q=e.target.value;CL.lim=60;emit()}}/>
-   ${pg.map(x=>html`<div className=${'cr '+x.k+(x.qd?' qd':'')} key=${x.k+x.v}>
+   ${pg.map(x=>html`<div className=${'cr '+x.k+(x.qd?' qd':'')} key=${x.k+x.v+(x.o?'|'+(x.o['Kode Item']||''):'')}>
      <div className="h"><b>${x.v}</b><span className="tag">${x.qd?'Qty beda':TAGS[x.k]}</span></div>
      ${x.o?html`<div className="mute">${x.o['Nama Item']||x.o['Kode Item']||''}${x.o.Qty?' · Qty '+x.o.Qty:''}${x.o['Status Voucher']?' · '+x.o['Status Voucher']:''}${x.o.Rak?' · '+x.o.Rak:''}</div>${(x.k==='no'||x.qd)?(()=>{const w=clWho(x);return w.lori||w.pic?html`<div className="mute">🚚 Lori <b>${w.lori||'-'}</b> · 👤 PIC <b>${w.pic||'-'}</b>${w.src?' (perkiraan Muat)':''}</div>`:null})():null}`:null}
+ ${!VIEW&&x.k==='no'&&x.mirip?html`<div className="row"><button className="btn sm" onClick=${()=>ask('Validasi salah ketik?','Voucher '+x.v+' di laporan sebenarnya adalah '+x.mirip+' di CLEARING ('+x.mc+'). Setelah divalidasi, dihitung COCOK dan masuk persentase.','Ya, benar salah ketik',()=>clFixSet(x.v,x.mirip))}>✔ Validasi: benar salah ketik (${x.mirip})</button></div>`:null}
+ ${x.fx?html`<div className="mute">✅ Divalidasi salah ketik → CLEARING <b>${x.fx.to}</b> · ${x.fx.by} · ${x.fx.at} ${!VIEW?html`<button className="btn sm" onClick=${()=>clFixDel(x.v)}>↺ Batalkan</button>`:null}</div>`:null}
      ${x.qd?html`<div className="qdiff">Qty laporan <b>${fmt(x.q1)}</b> → CLEARING terbaru <b>${fmt(x.q2)}</b> (${x.q2-x.q1>0?'+':''}${fmt(x.q2-x.q1)})${x.prev?html` · sebelumnya <b>${x.prev.q==null?'-':fmt(x.prev.q)}</b>`:null}</div>`:null}${x.k==='no'&&x.mirip?html`<div className="qdiff">Mirip nomor <b>${x.mirip}</b> di CLEARING (salah ketik?)</div>`:null}${x.idf?html`<div className="qdiff">Kode item beda: laporan <b>${x.ui}</b> vs CLEARING <b>${x.ci}</b></div>`:null}
      ${x.rows.map(i=>html`<div className="cm" key=${i}>${cells(i).map(([h,v,c])=>html`<span key=${c}>${h}: <b>${v}</b></span>`)}</div>`)}
      ${x.dup>1?html`<div className="mute">Nomor ini ada ${x.dup}× di CLEARING · dipakai tanggal terakhir${CL.dcol>=0?' ('+d.rows[x.rows[0]][CL.dcol]+')':''} · baris ${x.rows[0]+2}</div>`:null}</div>`)}
