@@ -56,6 +56,11 @@ Upload laporan voucher di tab Clearing, lalu dicocokkan dengan tab CLEARING. Lap
 
 No lori dan PIC diambil otomatis dari kolom file upload atau tab CLEARING bila headernya bernama mis. `No Lori`/`Nopol`/`Plat`/`Kendaraan` dan `PIC`/`Petugas`/`Checker`/`Operator`. Bila tidak ada, aplikasi memperkirakannya dari data Muat (kode item, qty, dan tanggal yang berdekatan) dan memberi label "perkiraan dari data Muat".
 
+### Cocok = no voucher + qty, kolom otomatis
+- Tidak ada lagi pilih kolom: voucher, qty, kode item, tanggal, lori, PIC dan satuan dideteksi otomatis dari nama header **dan isi data** (kecocokan dengan laporan yang diupload). Pengaturan kolom hanya terlipat sebagai cadangan.
+- **Cocok** berarti nomor voucher ada **dan** qty sama. Voucher yang ada tetapi qty beda tidak dihitung cocok.
+- **Validasi satuan** (mis. ikat vs pcs): bila qty laporan = qty CLEARING × bilangan bulat (contoh 1.200 = 48 × 25), muncul tombol **✔ Validasi satuan**. Pilih "Berlaku untuk item ini" agar voucher berikutnya dari item yang sama langsung cocok di qty, atau "Hanya voucher ini". Bisa dibatalkan, dan tercatat di bagian G laporan. Validasi tersimpan di perangkat.
+
 ### Presisi pencocokan voucher
 - Nomor voucher dibaca tahan format: apostrof, spasi, awalan huruf/`No.`, sufiks `-01`, banyak nomor dalam satu sel, nomor terselip (`12-1000009`), dan angka 0 di depan yang hilang.
 - Kolom voucher dipilih otomatis berdasarkan jumlah yang benar-benar cocok (bukan hanya judul kolom).
