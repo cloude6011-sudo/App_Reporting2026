@@ -56,6 +56,19 @@ Upload laporan voucher di tab Clearing, lalu dicocokkan dengan tab CLEARING. Lap
 
 No lori dan PIC diambil otomatis dari kolom file upload atau tab CLEARING bila headernya bernama mis. `No Lori`/`Nopol`/`Plat`/`Kendaraan` dan `PIC`/`Petugas`/`Checker`/`Operator`. Bila tidak ada, aplikasi memperkirakannya dari data Muat (kode item, qty, dan tanggal yang berdekatan) dan memberi label "perkiraan dari data Muat".
 
+### Format laporan Clearing (Telegram / Salin / WhatsApp)
+Judul **📊 LAPORAN REKONSILIASI VOUCHER WMS**, nama gudang (dari pengaturan), tanggal, nama file, lalu bagian bernomor yang menyesuaikan isi:
+1. Hasil rekonsiliasi (total voucher, hasil counting, belum ditemukan, selisih qty, kecocokan nomor voucher, status) 
+2. Voucher belum ditemukan (no voucher, item, qty, no lori, PIC, analisa)
+3. Selisih qty dan temuan lain (hanya bila ada: qty beda, kode item beda, salah ketik/satuan yang sudah dicocokkan)
+4. Status akhir
+5. Tindakan lanjutan, status penutup (`CLOSED – QUANTITY VALIDATED, NO ISSUE` atau `OPEN – …`), pelapor, dan waktu update (WIB)
+
+Voucher yang hanya ada di CLEARING (mis. dari laporan muat lain) **tidak** ditampilkan di laporan.
+
+### Upload laporan voucher otomatis
+Tabel, baris header, kolom voucher, qty, kode item, nama, tanggal, shift, lori dan PIC dikenali otomatis dari isi data, tanpa harus berjudul "No Voucher". Bila nama kolom tidak dikenali, kolom qty dan kode item dicocokkan dengan isi data CLEARING.
+
 ### Cocok = no voucher + qty, kolom otomatis
 - Tidak ada lagi pilih kolom: voucher, qty, kode item, tanggal, lori, PIC dan satuan dideteksi otomatis dari nama header **dan isi data** (kecocokan dengan laporan yang diupload). Pengaturan kolom hanya terlipat sebagai cadangan.
 - **Cocok** berarti nomor voucher ada **dan** qty sama. Voucher yang ada tetapi qty beda tidak dihitung cocok.

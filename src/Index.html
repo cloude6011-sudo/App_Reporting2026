@@ -1993,24 +1993,63 @@ function clAuto(){const d=CL.data;if(!d||!d.headers||!d.headers.length){CL.col=-
 function clAutoRefresh(){if(!GS||VIEW||CL.busy)return;if(Date.now()-(CL.refT||0)<10*60000)return;CL.refT=Date.now();clLoad(true)}
 function clLoad(refresh){if(!GS){CL.err='Data CLEARING hanya tersedia saat tersambung ke Apps Script';emit();return}
  CL.busy=true;CL.err='';emit();
- GS.withSuccessHandler(r=>{CL.busy=false;CL.data=r;CL.loaded=true;clAuto();if(refresh)toast(r.msg||'Data CLEARING diperbarui');emit()})
+ GS.withSuccessHandler(r=>{CL.busy=false;CL.data=r;CL.loaded=true;clAuto();if(CL.up){clBuild();clAuto()}if(refresh)toast(r.msg||'Data CLEARING diperbarui');emit()})
   .withFailureHandler(e=>{CL.busy=false;CL.loaded=true;CL.err=String(e&&e.message||e);emit()}).clearingData(!!refresh)}
+/* ---- upload laporan voucher: tabel, kolom voucher, qty, item, dll. dikenali OTOMATIS dari isi data (nama header bebas) ---- */
+const UAL={kode:/kode\s*(item|barang|material|sku)|item\s*code|^sku$|^material$|^item$/i,nama:/nama\s*(item|barang|material)|description|deskripsi|^nama$|^barang$/i,qty:/(^|[^a-z])(qty|quantity|jumlah|jml|volume|vol|pcs)([^a-z]|$)/i,
+ status:/status/i,posisi:/posisi|position|lokasi/i,rak:/^rak\b|^bin\b|^location$/i,tgl:/tgl|tanggal|date|waktu/i,shift:/shift/i,mesin:/mesin|machine/i};
+const strict7=x=>/(^|\D)\d{7}(?!\d)/.test(String(x==null?'':x));
+function clFindTable(aoa){
+ let dr=-1;for(let i=0;i<Math.min(aoa.length,60);i++){if(aoa[i].some(strict7)){dr=i;break}}
+ if(dr<0)for(let i=0;i<Math.min(aoa.length,60);i++){if(aoa[i].some(c=>v7all(c).length)){dr=i;break}}
+ if(dr<0)return null;
+ const body=aoa.slice(dr,dr+80),W=Math.max(...body.map(r=>r.length)),cnt=Array(W).fill(0);
+ body.forEach(r=>{for(let c=0;c<W;c++)if(strict7(r[c]))cnt[c]++});
+ let mx=Math.max(...cnt);if(mx<=0){body.forEach(r=>{for(let c=0;c<W;c++)if(v7all(r[c]).length)cnt[c]++});mx=Math.max(...cnt)}
+ let cv=cnt.indexOf(mx);
+ const hr=dr>0&&aoa[dr-1].some(c=>String(c).trim()!=='')?aoa[dr-1].map(c=>String(c==null?'':c).trim()):null;
+ if(hr){const j=hr.findIndex(h=>/voucher/i.test(h));if(j>=0&&cnt[j]>=mx*0.5)cv=j}
+ return{H:hr||Array.from({length:W},(_,c)=>'Kolom '+(c+1)),rows:aoa.slice(dr),cv,n:cnt[cv]}}
+function clUpMap(U){const H=U.H,used=new Set([U.cv]),take=re=>{const i=H.findIndex((h,c)=>!used.has(c)&&re.test(h));if(i>=0)used.add(i);return i};
+ const m={cv:U.cv};['kode','nama','qty','status','posisi','rak','tgl','shift','mesin'].forEach(k=>{m[k]=take(UAL[k])});
+ m.lori=H.findIndex((h,c)=>c!==U.cv&&CLAL.lori.test(h));m.pic=H.findIndex((h,c)=>c!==U.cv&&CLAL.pic.test(h));return m}
+/* kolom qty / kode item yang namanya tidak dikenali: cocokkan isi kolom dengan kolom CLEARING pada nomor voucher yang sama */
+function clUpRefine(U,m){const d=CL.data;if(!d||!d.rows.length||(m.qty>=0&&m.kode>=0))return m;
+ let vc=CL.col;if(vc<0){const vs=new Set(U.rows.map(r=>v7(r[U.cv])).filter(Boolean));let bn=0;d.headers.forEach((h,c)=>{let n=0;d.rows.forEach(r=>{if(v7all(r[c]).some(v=>vs.has(v)))n++});if(n>bn){bn=n;vc=c}})}
+ if(vc<0)return m;
+ const idx={};d.rows.forEach((r,i)=>v7all(r[vc]).forEach(v=>(idx[v]=idx[v]||[]).push(i)));
+ const P=[];U.rows.forEach(r=>{const v=v7(r[U.cv]);if(v&&idx[v])P.push({r,a:idx[v]})});if(!P.length)return m;
+ const used=new Set(Object.values(m).filter(x=>typeof x==='number'&&x>=0)),W=Math.max(...U.rows.slice(0,80).map(r=>r.length)),low=x=>String(x==null?'':x).trim().toLowerCase();
+ const Ag=[];for(let c=0;c<W;c++){if(used.has(c))continue;let best=null;
+  d.headers.forEach((h,j)=>{if(j===vc)return;let ag=0,tn=0,len=0;P.forEach(({r,a})=>{const t=String(r[c]==null?'':r[c]).trim();if(t==='')return;tn++;len+=t.length;const q=qtyN(t);if(a.some(i=>{const x=d.rows[i][j];return low(x)===low(t)||(q!=null&&qtyN(x)!=null&&String(x).trim()!==''&&Math.abs(qtyN(x)-q)<1e-6)}))ag++});
+   if(tn>=P.length*.6&&ag/tn>=.3&&(!best||ag/tn>best.r))best={c,j,r:ag/tn,len:len/Math.max(tn,1),num:P.every(({r})=>String(r[c]).trim()===''||qtyN(r[c])!=null)}});
+  if(best)Ag.push(best)}
+ const tag=a=>({q:CLQ.test(String(d.headers[a.j])),i:CLI.test(String(d.headers[a.j]).trim())});
+ if(m.kode<0&&m.qty<0&&Ag.length){let q=Ag.filter(a=>tag(a).q&&a.num)[0],k=Ag.filter(a=>tag(a).i&&a!==q)[0];
+  if(!q&&!k&&Ag.length>1){const so=Ag.slice().sort((x,y)=>y.len-x.len);k=so[0];q=so.filter(a=>a!==k&&a.num).pop()}
+  else if(!q&&!k){const a=Ag[0];if(a.num&&a.len<4)q=a;else k=a}
+  else{if(!q){const r=Ag.filter(a=>a!==k&&a.num).sort((x,y)=>y.r-x.r)[0];if(r)q=r}if(!k){const r=Ag.filter(a=>a!==q&&(!a.num||a.len>=4)).sort((x,y)=>y.r-x.r)[0];if(r)k=r}}
+  if(q)m.qty=q.c;if(k)m.kode=k.c}
+ else if(m.qty<0){const q=Ag.filter(a=>a.num).sort((x,y)=>(tag(y).q-tag(x).q)||(y.r-x.r))[0];if(q)m.qty=q.c}
+ else if(m.kode<0){const k=Ag.sort((x,y)=>(tag(y).i-tag(x).i)||(y.r-x.r))[0];if(k)m.kode=k.c}
+ return m}
+function clBuild(){const U=CL.up;if(!U)return;const m=clUpRefine(U,clUpMap(U)),val=(r,c)=>c>=0?String(r[c]==null?'':r[c]).trim():'';
+ const KS=[['Kode Item','kode'],['Nama Item','nama'],['Qty','qty'],['Status Voucher','status'],['Posisi','posisi'],['Rak','rak'],['Tgl','tgl'],['Shift','shift'],['Mesin','mesin']].filter(([k,f])=>m[f]>=0);
+ const mkO=(v,r)=>{const o={v};KS.forEach(([k,f])=>{o[k]=val(r,m[f])});if(m.lori>=0)o.Lori=val(r,m.lori);if(m.pic>=0)o.PIC=val(r,m.pic);return o};
+ const list=[],map={};let bad=0,dup=0,multi=0;
+ U.rows.forEach(r=>{const raw=r[U.cv];if(raw===''||raw==null)return;const v=v7(raw);if(!v){bad++;return}
+  if(map[v]){const ki=val(r,m.kode).toLowerCase();if(ki&&!list.some(z=>z.v===v&&String(z['Kode Item']||'').trim().toLowerCase()===ki)){const o2=mkO(v,r);o2.multi=1;list.push(o2);multi++}else dup++;return}
+  const o=mkO(v,r);map[v]=o;list.push(o)});
+ CL.imp={list,map,bad,dup,multi,cols:KS.map(x=>x[0]).concat(m.lori>=0?['Lori']:[],m.pic>=0?['PIC']:[]),hl:m.lori>=0?U.H[m.lori]:'',hp:m.pic>=0?U.H[m.pic]:'',um:m,uh:U.H}}
 async function clImport(f){if(!f)return;
- try{await need('xlsx');const wb=XLSX.read(await f.arrayBuffer(),{type:'array',raw:true});let aoa=[],hi=-1;
-  for(const n of wb.SheetNames){aoa=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:'',raw:true});hi=aoa.findIndex(r=>r.some(c=>/^no\.?\s*voucher$/i.test(String(c).trim())));if(hi>=0)break}
-  if(hi<0)return toast('Kolom "No Voucher" tidak ditemukan di file');
-  const H=aoa[hi].map(c=>String(c).trim()),ix=n=>H.findIndex(h=>h.toLowerCase()===n.toLowerCase()),cv=ix('No Voucher');
-  const pick=['Kode Item','Nama Item','Qty','Status Voucher','Posisi','Rak','Tgl','Shift','Mesin'].filter(k=>ix(k)>=0);
-  const jl=H.findIndex(h=>CLAL.lori.test(h)),jp=H.findIndex(h=>CLAL.pic.test(h));
-  const list=[],map={};let bad=0,dup=0,multi=0;
-  const mkO=(v,r)=>{const o={v};pick.forEach(k=>{const j=ix(k);o[k]=String(r[j]==null?'':r[j])});if(jl>=0)o.Lori=String(r[jl]==null?'':r[jl]).trim();if(jp>=0)o.PIC=String(r[jp]==null?'':r[jp]).trim();return o};
-  aoa.slice(hi+1).forEach(r=>{const raw=r[cv];if(raw===''||raw==null)return;const v=v7(raw);if(!v){bad++;return}
-   if(map[v]){const ki=String(r[ix('Kode Item')]==null?'':r[ix('Kode Item')]).trim().toLowerCase();
-    if(ki&&!list.some(z=>z.v===v&&String(z['Kode Item']||'').trim().toLowerCase()===ki)){const o2=mkO(v,r);o2.multi=1;list.push(o2);multi++}else dup++;return}
-   const o=mkO(v,r);map[v]=o;list.push(o)});
-  CL.imp={list,map,bad,dup,multi,cols:pick.concat(jl>=0?['Lori']:[],jp>=0?['PIC']:[]),hl:jl>=0?H[jl]:'',hp:jp>=0?H[jp]:''};CL.sv={};CL.fn=f.name;CL.f='all';CL.q='';CL.lim=60;CL.manual=false;clAuto();emit();clAutoRefresh();
-  toast(list.length+' voucher dibaca'+(bad?' · '+bad+' baris bukan 7 angka':'')+(dup?' · '+dup+' dobel digabung':''))}
+ try{await need('xlsx');const wb=XLSX.read(await f.arrayBuffer(),{type:'array',raw:true});let best=null;
+  for(const n of wb.SheetNames){const aoa=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:'',raw:true});const t=clFindTable(aoa);if(t&&(!best||t.n>best.n))best=t}
+  if(!best)return toast('Tidak ada nomor voucher 7 angka di file ini');
+  CL.up=best;CL.fn=f.name;CL.sv={};CL.f='all';CL.q='';CL.lim=60;CL.manual=false;
+  clBuild();clAuto();clBuild();clAuto();emit();clAutoRefresh();const I=CL.imp;
+  toast(I.list.length+' voucher dibaca'+(I.bad?' · '+I.bad+' baris bukan 7 angka':'')+(I.dup?' · '+I.dup+' dobel digabung':''))}
  catch(e){toast('Gagal membaca file: '+(e.message||e))}}
+
 /* validasi manual "benar salah ketik": nomor di laporan = nomor lain di CLEARING -> dihitung cocok (tersimpan di perangkat) */
 let CLFIX=(()=>{try{return LS.g('wms_clfix')||{}}catch(e){return {}}})();
 function clFixSet(v,to){CLFIX[v]={to,by:(R.pet||(M.meta&&M.meta.pelapor)||'-'),at:nowStr()};LS.s('wms_clfix',CLFIX);emit();toast('✅ Divalidasi: '+v+' = '+to+' di CLEARING')}
@@ -2064,38 +2103,55 @@ async function clExport(){const m=clMatch();if(!m)return;try{await need('xlsx')}
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),'Clearing');
  const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'}),url=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),a=document.createElement('a');
  a.href=url;a.download='Cocok Clearing '+today()+'.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000)}
+const BLNF=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 function clrText(){const I=CL.imp,m=clMatch();
  if(!I)return'Belum ada import. Upload laporan voucher di tab Clearing.';
  if(!CL.data||!CL.data.rows.length)return'Data CLEARING belum dimuat. Buka tab Clearing lalu tekan Perbarui.';
  if(!m)return'Kolom voucher belum terdeteksi otomatis di data CLEARING (header: '+((CL.data&&CL.data.headers)||[]).join(', ')+').';
- const tot=m.ok.length+m.no.length,L=waHead('LAPORAN CLEARING VOUCHER',`File : ${CL.fn||'-'}`),idOnly=m.idf.filter(x=>!x.qd);
- L.push('*A. HASIL PENCOCOKAN (no voucher + qty vs hasil counting di CLEARING)*','```',padR('Voucher laporan',24)+padL(tot,7),padR('Cocok (voucher+qty)',24)+padL(m.full.length,7),padR('Qty beda',24)+padL(m.qi>=0?m.qd.length:'-',7),padR('Belum di CLEARING',24)+padL(m.no.length,7),...(m.ii>=0?[padR('Kode item beda',24)+padL(m.idf.length,7)]:[]),...(m.fx.filter(x=>!x.fx.auto).length?[padR('Divalidasi manual',24)+padL(m.fx.filter(x=>!x.fx.auto).length,7)]:[]),...(m.conv.filter(x=>!x.conv.auto).length?[padR('Divalidasi satuan',24)+padL(m.conv.filter(x=>!x.conv.auto).length,7)]:[]),...((m.fx.filter(x=>x.fx.auto).length+m.conv.filter(x=>x.conv.auto).length)?[padR('Cocok otomatis',24)+padL(m.fx.filter(x=>x.fx.auto).length+m.conv.filter(x=>x.conv.auto).length,7)]:[]),'-'.repeat(31),padR('% Cocok (voucher+qty)',24)+padL(pct1(m.full.length,tot),7),'```');
- const perlu=m.no.length+(m.qi>=0?m.qd.length:0)+idOnly.length;
- if(I.multi)L.push('_ℹ️ '+I.multi+' baris item tambahan pada voucher yang sama ikut dicocokkan per kode item._');
- if(m.lz.length)L.push('_ℹ️ '+m.lz.length+' voucher cocok setelah angka 0 di depan dilengkapi (format angka di CLEARING)._');
- L.push(perlu?`⚠️ *${perlu} voucher perlu dicek*: ${m.no.length} belum ada hasil counting`+(m.qi>=0?` · ${m.qd.length} qty beda`:'')+(idOnly.length?` · ${idOnly.length} kode item beda`:''):'✅ Semua voucher cocok dengan hasil counting');
- if(m.qi<0)L.push('_⚠️ Kolom qty tidak terdeteksi otomatis di CLEARING (header: '+CL.data.headers.join(', ')+'), jadi cocok baru berdasarkan no voucher saja._');
- const noWho=!m.no.concat(m.qd).some(x=>{const w=clWho(x);return w.lori||w.pic});
- if(noWho&&(m.no.length||m.qd.length))L.push('_ℹ️ No lori dan PIC tidak ada di file upload / CLEARING dan tidak ditemukan di data Muat._');
- L.push('');
+ const tot=m.ok.length+m.no.length,idOnly=m.idf.filter(x=>!x.qd),qcmp=m.qi>=0,nQd=qcmp?m.qd.length:0,nFind=m.no.length+nQd+idOnly.length,clean=nFind===0;
+ const d0=new Date(),TGL=d0.getDate()+' '+BLNF[d0.getMonth()]+' '+d0.getFullYear(),p2=(a,b)=>b?(a/b*100).toFixed(2).replace('.',',')+'%':'-',p0=(a,b)=>{if(!b)return'-';const v=a/b*100;return v===100?'100%':v.toFixed(1).replace('.',',')+'%'};
  const det=o=>[o['Kode Item']&&('Kode '+o['Kode Item']),o['Nama Item'],o.Qty&&('Qty '+fmt(qtyN(o.Qty)||0))].filter(Boolean).join(' | ');
  const ex=o=>[o['Status Voucher']&&('Status '+o['Status Voucher']),o.Posisi&&('Posisi '+o.Posisi),o.Rak&&('Rak '+o.Rak),o.Tgl&&('Tgl '+o.Tgl),o.Shift&&('Shift '+o.Shift),o.Mesin&&('Mesin '+o.Mesin)].filter(Boolean).join(' · ');
  const who=x=>{const w=clWho(x);return '   🚚 Lori: '+(w.lori||'-')+' · 👤 PIC: '+(w.pic||'-')+(w.src?' ('+w.src+')':'')};
+ const L=['📊 *LAPORAN REKONSILIASI VOUCHER WMS*'];if(M.meta.area)L.push(M.meta.area);
  const cap=(a,f,n)=>{n=n||15;a.slice(0,n).forEach(x=>L.push(...f(x)));if(a.length>n)L.push(`_… dan ${a.length-n} lainnya (lihat Excel)_`)};
- L.push(`*B. BELUM ADA HASIL COUNTING DI CLEARING (${m.no.length})*`);
- if(!m.no.length)L.push('Semua voucher sudah ada di CLEARING ✅');
- else{L.push('_Mohon dicek lori, PIC, item dan qty berikut lalu input ke CLEARING:_');cap(m.no,x=>{const a=['• '+x.v+' | '+(det(x.o)||'-'),who(x)],e=ex(x.o);if(e)a.push('   '+e);clAnalisa(x).forEach(t=>a.push('   ➜ '+t));return a})}
- if(m.qd.length){L.push('',`*C. NO VOUCHER SAMA, QTY BEDA (${m.qd.length})*`,'_Qty voucher di laporan vs qty terbaru di CLEARING_');
-  cap(m.qd,x=>{const dq=x.q2-x.q1,a=['• '+x.v+' | '+(x.o['Nama Item']||x.o['Kode Item']||'-'),who(x),'   Qty voucher (laporan) : '+fmt(x.q1),'   Qty CLEARING terbaru  : '+fmt(x.q2)+(clTg(x.cur)?' ('+clTg(x.cur)+')':'')+' → selisih '+(dq>0?'+':'')+fmt(dq)];
-   if(x.hist&&x.hist.length>1)a.push('   Riwayat CLEARING      : '+x.hist.slice(-4).map(z=>(clTg(z)?clTg(z)+': ':'')+(z.q==null?'-':fmt(z.q))).join(' → '));
-   clAnalisa(x).forEach(t=>a.push('   ➜ '+t));return a})}
- if(idOnly.length){L.push('',`*D. NO VOUCHER SAMA, KODE ITEM BEDA (${idOnly.length})*`);cap(idOnly,x=>['• '+x.v+' | laporan '+x.ui+' vs CLEARING '+x.ci,who(x)].concat(clAnalisa(x).map(t=>'   ➜ '+t)))}
- if(m.of.length){L.push('',`*E. ADA DI CLEARING, TIDAK ADA DI LAPORAN (${m.of.length})*`,'_Kemungkinan voucher belum masuk laporan upload atau nomor salah ketik._');cap(m.of,x=>{const c=x.cx||{};return['• '+x.v+(c.item?' | Kode '+c.item:'')+(c.q!=null?' | Qty '+fmt(c.q):'')+((c.lori||c.pic)?' | 🚚 '+(c.lori||'-')+' · 👤 '+(c.pic||'-'):'')]},30)}
- if(m.fx.length){L.push('',`*F. SALAH KETIK NOMOR, SUDAH DICOCOKKAN (${m.fx.length})*`,'_Nomor di laporan salah ketik; dicocokkan otomatis (item & qty sama) atau divalidasi manual._');cap(m.fx,x=>['• '+x.v+' → CLEARING '+x.fx.to+' · '+(x.fx.auto?x.fx.by:'divalidasi '+x.fx.by+' ('+x.fx.at+')')],30)}
- if(m.conv.length){L.push('',`*G. BEDA SATUAN, SUDAH DICOCOKKAN (${m.conv.length})*`,'_Qty beda karena satuan (mis. ikat vs pcs); dicocokkan otomatis (pola konsisten) atau divalidasi manual._');cap(m.conv,x=>['• '+x.v+' | '+(x.o['Nama Item']||x.o['Kode Item']||'-'),'   Qty laporan '+fmt(x.q1)+' = CLEARING '+fmt(x.q2)+' '+(x.conv.f>=1?'× '+fmt(x.conv.f):'÷ '+fmt(Math.round(1/x.conv.f)))+' · '+(x.conv.auto?x.conv.by:'divalidasi '+x.conv.by+' ('+x.conv.at+')')],30)}
- return waFoot(L)}
+ L.push('','Tanggal: '+TGL,'File: '+(CL.fn||'-'),'',LINE,'','*1. HASIL REKONSILIASI*','','Total Voucher Laporan WMS : '+tot,'Hasil Counting : '+m.ok.length,'Voucher Belum Ditemukan : '+m.no.length,'Selisih Qty : '+(qcmp?(nQd?nQd+' voucher':'0'):'belum dapat dibandingkan'),'Kecocokan Nomor Voucher : '+p2(m.ok.length,tot));
+ if(qcmp&&nQd)L.push('Kecocokan Voucher + Qty : '+p2(m.full.length,tot));
+ const auto=m.fx.length+m.conv.length;if(auto)L.push('Dicocokkan otomatis / divalidasi : '+auto+' voucher');
+ L.push('','Status Rekonsiliasi : '+(clean?'SELESAI':'BELUM SELESAI'),'');
+ const sh=[...new Set(I.list.map(o=>String(o.Shift||'').trim()).filter(Boolean))].sort(),vs=I.list.map(o=>+o.v).filter(Boolean),rg=vs.length?Math.min(...vs)+'–'+Math.max(...vs):'';
+ const head='Hasil '+(sh.length?'Shift '+sh.join(', '):'Rekonsiliasi')+(rg?' – Voucher '+rg:'');
+ if(clean)L.push('✅ '+head,'Seluruh '+tot+' voucher telah ditemukan dan sesuai dengan kuantitas hasil counting. Tidak terdapat selisih maupun temuan.');
+ else L.push('⚠️ '+head,nFind+' dari '+tot+' voucher perlu tindak lanjut: '+[m.no.length&&m.no.length+' belum ditemukan',nQd&&nQd+' selisih qty',idOnly.length&&idOnly.length+' kode item beda'].filter(Boolean).join(', ')+'.');
+ if(I.multi)L.push('_ℹ️ '+I.multi+' baris item tambahan pada voucher yang sama ikut dicocokkan per kode item._');
+ if(m.lz.length)L.push('_ℹ️ '+m.lz.length+' voucher cocok setelah angka 0 di depan dilengkapi (format angka di CLEARING)._');
+ if(!qcmp)L.push('_⚠️ Kolom qty tidak terdeteksi otomatis di CLEARING (header: '+CL.data.headers.join(', ')+'), jadi cocok baru berdasarkan no voucher saja._');
+ const noWho=!m.no.concat(m.qd).some(x=>{const w=clWho(x);return w.lori||w.pic});
+ if(noWho&&(m.no.length||nQd))L.push('_ℹ️ No lori dan PIC tidak ada di file upload / CLEARING dan tidak ditemukan di data Muat._');
+ L.push('','*2. VOUCHER BELUM DITEMUKAN*','','Jumlah : '+m.no.length+' voucher');
+ if(m.no.length){L.push('_Mohon dicek lori, PIC, item dan qty berikut lalu input ke CLEARING:_');cap(m.no,x=>{const a=['• '+x.v+' | '+(det(x.o)||'-'),who(x)],e=ex(x.o);if(e)a.push('   '+e);clAnalisa(x).forEach(t=>a.push('   ➜ '+t));return a})}
+ let sn=3;
+ if(nQd||idOnly.length||m.fx.length||m.conv.length){L.push('',`*${sn++}. SELISIH QTY DAN TEMUAN LAIN*`);
+  if(nQd){L.push('',`*Selisih qty (${nQd} voucher)*`,'_Qty voucher di laporan vs qty terbaru di CLEARING_');
+   cap(m.qd,x=>{const dq=x.q2-x.q1,a=['• '+x.v+' | '+(x.o['Nama Item']||x.o['Kode Item']||'-'),who(x),'   Qty voucher (laporan) : '+fmt(x.q1),'   Qty CLEARING terbaru  : '+fmt(x.q2)+(clTg(x.cur)?' ('+clTg(x.cur)+')':'')+' → selisih '+(dq>0?'+':'')+fmt(dq)];
+    if(x.hist&&x.hist.length>1)a.push('   Riwayat CLEARING      : '+x.hist.slice(-4).map(z=>(clTg(z)?clTg(z)+': ':'')+(z.q==null?'-':fmt(z.q))).join(' → '));
+    clAnalisa(x).forEach(t=>a.push('   ➜ '+t));return a})}
+  if(idOnly.length){L.push('',`*Kode item beda (${idOnly.length})*`);cap(idOnly,x=>['• '+x.v+' | laporan '+x.ui+' vs CLEARING '+x.ci,who(x)].concat(clAnalisa(x).map(t=>'   ➜ '+t)))}
+  if(m.fx.length){L.push('',`*Salah ketik nomor, sudah dicocokkan (${m.fx.length})*`,'_Dicocokkan otomatis (item & qty sama) atau divalidasi manual._');cap(m.fx,x=>['• '+x.v+' → CLEARING '+x.fx.to+' · '+(x.fx.auto?x.fx.by:'divalidasi '+x.fx.by+' ('+x.fx.at+')')],30)}
+  if(m.conv.length){L.push('',`*Beda satuan, sudah dicocokkan (${m.conv.length})*`,'_Qty beda karena satuan (mis. ikat vs pcs); dicocokkan otomatis (pola konsisten) atau divalidasi manual._');cap(m.conv,x=>['• '+x.v+' | '+(x.o['Nama Item']||x.o['Kode Item']||'-'),'   Qty laporan '+fmt(x.q1)+' = CLEARING '+fmt(x.q2)+' '+(x.conv.f>=1?'× '+fmt(x.conv.f):'÷ '+fmt(Math.round(1/x.conv.f)))+' · '+(x.conv.auto?x.conv.by:'divalidasi '+x.conv.by+' ('+x.conv.at+')')],30)}}
+ L.push('',`*${sn++}. STATUS AKHIR*`,'','- Kecocokan nomor voucher: '+p0(m.ok.length,tot),'- Validasi kuantitas: '+(!qcmp?'Belum dapat dibandingkan (kolom qty tidak terdeteksi)':nQd?'Ada selisih ('+nQd+' voucher)':'Sesuai'),'- Rekonsiliasi: '+(clean?'Selesai':'Belum selesai'),'- Temuan: '+(clean?'Nihil':nFind+' voucher perlu tindak lanjut'));
+ L.push('',`*${sn++}. TINDAKAN LANJUTAN*`,'');
+ if(clean)L.push('Tidak ada tindakan korektif yang diperlukan. Monitoring dilanjutkan apabila terdapat temuan baru.');
+ else{let k=0;if(m.no.length)L.push((++k)+'. Cek hasil counting dan input CLEARING untuk '+m.no.length+' voucher yang belum ditemukan (lori dan PIC tertera di atas).');
+  if(nQd)L.push((++k)+'. Verifikasi qty '+nQd+' voucher yang selisih; bila hanya beda satuan (ikat/pcs), validasi satuan di aplikasi.');
+  if(idOnly.length)L.push((++k)+'. Cek kode item '+idOnly.length+' voucher yang berbeda antara laporan dan CLEARING.');
+  L.push((++k)+'. Setelah dikoreksi, perbarui data CLEARING lalu upload ulang laporan untuk rekonsiliasi ulang.')}
+ L.push('',clean?(qcmp?'Status: CLOSED – QUANTITY VALIDATED, NO ISSUE':'Status: CLOSED – VOUCHER MATCHED (QTY BELUM DIBANDINGKAN)'):'Status: OPEN – '+[m.no.length&&m.no.length+' BELUM DITEMUKAN',nQd&&nQd+' SELISIH QTY',idOnly.length&&idOnly.length+' KODE ITEM BEDA'].filter(Boolean).join(' · ')+' – PERLU TINDAK LANJUT');
+ const nd=new Date(),pd=n=>String(n).padStart(2,'0');
+ L.push('',LINE,'');if(M.meta.pelapor)L.push('Dilaporkan oleh: '+M.meta.pelapor);L.push('Update: '+pd(nd.getDate())+'-'+pd(nd.getMonth()+1)+'-'+nd.getFullYear()+' | '+pd(nd.getHours())+':'+pd(nd.getMinutes())+' WIB');
+ return L.join('\n')}
 function clTgLoad(){if(!GS||CL.tgAsked)return;CL.tgAsked=true;GS.withSuccessHandler(r=>{CL.tg=r;emit()}).withFailureHandler(()=>{}).tgStatus()}
-function clReset(){CL.imp=null;CL.fn='';CL.col=-1;CL.manual=false;CL.dcol=-1;CL.dman=false;CL.f='all';CL.q='';CL.lim=60;CL.sv={};emit()}
+function clReset(){CL.imp=null;CL.up=null;CL.fn='';CL.col=-1;CL.manual=false;CL.dcol=-1;CL.dman=false;CL.f='all';CL.q='';CL.lim=60;CL.sv={};emit()}
 function clSave(force){const m=clMatch(),I=CL.imp;if(!m||!I)return toast('Belum ada hasil untuk disimpan');
  if(!GS)return toast('Simpan hanya tersedia saat tersambung ke Apps Script');if(CL.sv.busy)return;
  const p={text:clrText(),file:CL.fn,tot:m.ok.length+m.no.length,ok:m.full.length,qv:m.ok.length,no:m.no.length,of:m.of.length,noList:m.no.map(x=>x.v),qd:m.qd.length,qdList:m.qd.map(x=>x.v+' ('+fmt(x.q1)+'→'+fmt(x.q2)+')')};
@@ -2121,7 +2177,7 @@ function Clr(){
   <div className="card"><div className="row mid"><h3>Clearing</h3><button className="btn sm" disabled=${CL.busy} onClick=${()=>clLoad(true)}>${CL.busy?'⏳ Memuat…':'🔄 Perbarui'}</button></div>
    ${CL.err?html`<div className="mute" style=${{color:'var(--bed)'}}>⚠️ ${CL.err}</div>`:null}
    <div className="mute" style=${{fontSize:'.82rem',marginBottom:'.4rem'}}>${d?(d.rows.length?d.rows.length+' baris REKAP'+(d.at?' · disalin '+d.at:''):(d.msg||'Belum ada data')):(CL.busy?'Memuat…':'Belum dimuat')}${I?' · 📄 '+CL.fn+' ('+I.list.length+' voucher'+(I.bad?', '+I.bad+' dilewati':'')+')':''}${!I&&CL.last?' · ✅ Terakhir disimpan '+CL.last.at+' ('+CL.last.fn+': cocok '+CL.last.ok+'/'+CL.last.tot+')':''}</div>
-   <label className="btn pri up">＋ Upload laporan voucher<small>.xlsx · .xls · .csv — kolom No Voucher (7 angka)</small><input type="file" hidden accept=".xls,.xlsx,.csv" onChange=${e=>{const f=e.target.files[0];e.target.value='';clImport(f)}}/></label>
+   <label className="btn pri up">＋ Upload laporan voucher<small>.xlsx · .xls · .csv — kolom dikenali otomatis, nama header bebas</small><input type="file" hidden accept=".xls,.xlsx,.csv" onChange=${e=>{const f=e.target.files[0];e.target.value='';clImport(f)}}/></label>
    ${H.length?html`<details className="ck" open=${CL.col<0||CL.qcol<0}><summary>🤖 Dibandingkan otomatis: voucher = <b>${CL.col>=0?H[CL.col]||'(kolom '+(CL.col+1)+')':'⚠️ belum ketemu'}</b> · qty = <b>${CL.qcol>=0?H[CL.qcol]||'(kolom '+(CL.qcol+1)+')':'⚠️ belum ketemu'}</b>${CL.icol>=0?html` · item = <b>${H[CL.icol]||'(kolom '+(CL.icol+1)+')'}</b>`:null} · tanggal = <b>${CL.dcol>=0?H[CL.dcol]||'(kolom '+(CL.dcol+1)+')':'—'}</b> <small>(otomatis, tidak perlu dipilih)</small></summary>
     <label className="l">Kolom voucher (7 angka dari depan)</label><select value=${CL.col} onChange=${e=>{CL.col=+e.target.value;CL.manual=true;CL.lim=60;clAutoD();emit()}}><option value="-1">— pilih kolom —</option>${H.map((h,i)=>html`<option key=${i} value=${i}>${h||'(kolom '+(i+1)+')'}</option>`)}</select>
     <label className="l">Kolom tanggal (nomor ganda: dipakai tanggal terakhir)</label><select value=${CL.dcol} onChange=${e=>{CL.dcol=+e.target.value;CL.dman=true;emit()}}><option value="-1">— tidak ada: pakai baris paling bawah —</option>${H.map((h,i)=>html`<option key=${i} value=${i}>${h||'(kolom '+(i+1)+')'}</option>`)}</select>
