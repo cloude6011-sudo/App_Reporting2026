@@ -1245,7 +1245,7 @@ const padR=(s,n)=>{s=String(s);return s.length>n?s.slice(0,n):s+' '.repeat(n-s.l
 const LINE='━━━━━━━━━━━━━━━━━━━━';
 function waHead(t,sub){const L=[`*${t}*`];if(M.meta.area)L.push(M.meta.area);L.push(sub,LINE);return L}
 function waFoot(L){L.push(LINE);if(M.meta.pelapor)L.push(`Dilaporkan oleh: ${M.meta.pelapor}`);L.push(`_Update: ${nowStr()}_`);return L.join('\n')}
-const waB=X=>['```',padR('SPM full OK',22)+`: ${X.spmWms-X.spmCopy}`,padR('SPM copy rekomendasi',22)+`: ${X.spmCopy}`,padR('% SPM copy rekom.',22)+`: ${pct1(X.spmCopy,X.spmWms)}`,padR('% SPM input aktual',22)+`: ${pct1(X.spmWms-X.spmCopy,X.spmWms)}`,padR('Item OK',22)+`: ${X.ok}`,padR('Item copy rekomendasi',22)+`: ${X.copy} (${pct1(X.copy,X.lines)})`,padR('Sudah dicek checker',22)+`: ${X.checked}/${X.spmWms} SPM`,'```'];
+const waB=X=>['```',padR('SPM full OK',22)+`: ${X.spmWms-X.spmCopy}`,padR('SPM copy rekomendasi',22)+`: ${X.spmCopy}`,padR('% SPM copy rekom.',22)+`: ${pct1(X.spmCopy,X.spmWms)}`,padR('% SPM input aktual',22)+`: ${pct1(X.spmWms-X.spmCopy,X.spmWms)}`,padR('Item OK',22)+`: ${X.ok}`,padR('Item copy rekomendasi',22)+`: ${X.copy} (${pct1(X.copy,X.lines)})`,'```'];
 function waPic(pics){const L=['```',padR('PIC',11)+padL('SPM',4)+padL('OK',5)+padL('COPY',6),padR('',20)+padL('REKOM',6),'-'.repeat(26)];let a=0,b=0,c=0;
  pics.forEach(p=>{a+=p.spm;b+=p.ok;c+=p.copy;L.push(padR(p.pic,11)+padL(p.spm,4)+padL(p.ok,5)+padL(p.copy,6))});L.push('-'.repeat(26),padR('TOTAL',11)+padL(a,4)+padL(b,5)+padL(c,6),'```','_OK & Copy Rekomendasi = jumlah item_');return L}
 /* kolom No Lori & PIC: dikenali otomatis dari nama header (file upload maupun tab CLEARING) */
@@ -1276,23 +1276,6 @@ function analisaSel(x,all){
  if(d<0&&x.qtyMuat>0&&ad/x.qtySpm>=0.5)A.push('kurang banyak (≥50%) → sebagian belum dimuat atau lori belum penuh, cek posisi barang');
  if(!A.length)A.push(d<0?'muat kurang → cek apakah sisa masih di rak / area staging':'muat lebih → cek apakah ada barang tambahan di lori atau SPM belum diperbarui');
  return A.slice(0,2)}
-/* SPM yang sudah dimuat tapi belum ada hasil counting checker: lori, PIC, item, qty */
-function waNoCount(dates,ltr){
- const lines=skuLines(dates).filter(x=>!x.checked);if(!lines.length)return[];
- const g=new Map();lines.forEach(x=>{const k=x.date+'|'+x.spm;let o=g.get(k);if(!o)g.set(k,o={date:x.date,spm:x.spm,nopol:x.nopol,ship:x.ship,pics:new Set(),it:[]});x.pics.forEach(pc=>o.pics.add(pc));o.it.push(x);if(!o.nopol&&x.nopol)o.nopol=x.nopol});
- const A=[...g.values()].sort((a,b)=>a.date.localeCompare(b.date)||String(a.spm).localeCompare(String(b.spm)));
- const L=['*'+ltr+'. BELUM ADA HASIL COUNTING CHECKER ('+A.length+' SPM)*','_Mohon dicek checker: hitung fisik di lori, lalu isi PIC Check._'];
- A.slice(0,15).forEach((o,i)=>{L.push((i+1)+'. Lori '+(o.nopol||'-')+' · SPM '+o.spm+(o.ship?' · '+o.ship:''),'   PIC muat: '+([...o.pics].join(', ')||'-')+(dates.length>1?' · '+isoD(o.date).slice(0,5):''));
-  o.it.slice(0,4).forEach(x=>L.push('   • '+x.item+(x.desc?' '+x.desc:'')+' — muat '+fq(x.qtyMuat)));if(o.it.length>4)L.push('   … +'+(o.it.length-4)+' item lain')});
- if(A.length>15)L.push('_… dan '+(A.length-15)+' SPM lainnya_');return L}
-function waSel(dates,ltr){const A=selAgg(dates),T=A.T;if(!T.lines)return[];
- const L=[`*${ltr}. SKU SELISIH PER PIC (qty muat ≠ qty checker out (SPM))*`];
- if(!T.n){L.push('Tidak ada SKU selisih ✅');return L}
- L.push('```',padR('SKU selisih',20)+`: ${T.n} dari ${T.lines} (${pct1(T.n,T.lines)})`,padR('Ditangkap checker',20)+`: ${T.caught}/${T.n}`,padR('Sudah ditindak',20)+`: ${T.fu}/${T.n}`,'```','PIC tertinggi:');
- A.pics.filter(p=>p.n>0).slice(0,10).forEach(p=>L.push(`• ${p.pic}: ${p.n} SKU (${pct1(p.n,p.lines)})`));
- L.push('','*Rincian & analisa kemungkinan:*');
- A.sel.slice(0,12).forEach((x,i)=>{L.push((i+1)+'. '+isoD(x.date).slice(0,5)+' · '+x.item+(x.desc?' '+x.desc:''),'   SPM '+x.spm+' · Lori '+(x.nopol||'-')+(x.ship?' · '+x.ship:''),'   Muat '+fq(x.qtyMuat)+' vs counting '+fq(x.qtySpm)+' → '+(x.selisih>0?'+':'')+fq(x.selisih)+' ('+x.jenis+')','   PIC muat: '+(x.pics.join('/')||'-')+' · Checker: '+(x.checker||'belum dicek'));analisaSel(x,A.sel).forEach(t=>L.push('   ➜ '+t))});
- if(A.sel.length>12)L.push('_+ '+(A.sel.length-12)+' SKU lainnya ada di Excel / Sheet_');return L}
 const waCR=pics=>{const x=pics.filter(p=>p.copy>0).sort((a,b)=>b.copy-a.copy);return x.length?`• ${CR}: ${x.map(p=>`${p.pic} ${p.copy} item`).join(', ')}`:null};
 function waDay(S){const L=waHead('LAPORAN HARIAN KONTROL MUAT WMS',`Tanggal : ${longD(S.date)}`);
  L.push('*A. PROSES WMS* (1 SPM = 1 mobil)','```',padR('Total mobil / SPM',20)+padL(S.tMob||'-',7),padR('Diproses WMS',20)+padL(S.spmWms,7),padR('Tidak diproses WMS',20)+padL(S.tMob?S.notMob:'-',7),...(S.mMasuk>0?[padR('Mobil masuk',20)+padL(S.mMasuk,7),padR('Masuk blm diproses',20)+padL(Math.max(S.mMasuk-S.mobWms,0),7)]:[]),'-'.repeat(27),padR('% Diproses WMS',20)+padL(pct1(S.spmWms,S.tMob),7),padR('% Tidak diproses',20)+padL(pct1(S.notMob,S.tMob),7),'```','');
@@ -1300,10 +1283,8 @@ function waDay(S){const L=waHead('LAPORAN HARIAN KONTROL MUAT WMS',`Tanggal : ${
  if(!S.tMob)L.push('_Total mobil belum diisi_');else if(!S.notMob&&!S.reasons.length)L.push('Semua mobil diproses WMS ✅');
  else{L.push('Rekap alasan:');sortRc(S.reasonCount).forEach(([k,v])=>L.push(`• ${k} : ${v} mobil`));const det=S.reasons.filter(r=>r.spm||r.nopol||r.cust||r.cat);
   if(det.length){L.push('','Detail:');det.forEach((r,i)=>{L.push(`${i+1}. ${[r.spm&&('SPM '+r.spm),r.nopol,r.cust].filter(Boolean).join(' | ')||'Mobil '+(i+1)}`);L.push(`   Alasan : ${r.alasan||BELUM}`);if(r.cat)L.push(`   Ket    : ${r.cat}`)})}}
- const bel=S.spms.filter(s=>!s.checked),cr=waCR(S.pics);
- {const w=waSel([S.date],'E');if(w.length)L.push('',...w)}
- {const w=waNoCount([S.date],'F');if(w.length)L.push('',...w)}
- if(S.kurang.length||cr){L.push('','*G. PERLU TINDAK LANJUT*');if(cr)L.push(cr);
+ const cr=waCR(S.pics);
+ if(S.kurang.length||cr){L.push('','*E. PERLU TINDAK LANJUT*');if(cr)L.push(cr);
   S.kurang.forEach(s=>L.push(`• Qty muat kurang: SPM ${s.spm} (${s.ship}) muat ${fmt(s.qtyMuat)} dari ${fmt(s.qtySpm)}, kurang ${fmt(s.qtySpm-s.qtyMuat)}`))}
  return waFoot(L)}
 function waWeek(W){const T=W.T,L=waHead('LAPORAN MINGGUAN KONTROL MUAT WMS',`Periode : ${weekLabel(W.mon)}`);
@@ -1314,7 +1295,7 @@ function waWeek(W){const T=W.T,L=waHead('LAPORAN MINGGUAN KONTROL MUAT WMS',`Per
  if(W.missTgt.length)L.push(`_Total mobil belum diisi: ${W.missTgt.map(isoD).join(', ')}_`);
  L.push('','*B. HASIL MUAT DI WMS*',...waB(T),'','*C. PER PIC MUAT (seminggu)*',...waPic(W.pics),'',`*D. ALASAN TIDAK DIPROSES WMS (${T.notMob} mobil)*`);
  const rc=sortRc(W.rc);if(!rc.length)L.push(T.tMob?'Semua mobil diproses WMS ✅':'_Total mobil belum diisi_');else rc.forEach(([k,v])=>L.push(`• ${k} : ${v} mobil`));
- {const w=waSel(W.dates,'E');if(w.length)L.push('',...w)}{const w=waNoCount(W.dates,'F');if(w.length)L.push('',...w)}const cr=waCR(W.pics);if(cr)L.push('','*G. PERLU TINDAK LANJUT*',cr);return waFoot(L)}
+ const cr=waCR(W.pics);if(cr)L.push('','*E. PERLU TINDAK LANJUT*',cr);return waFoot(L)}
 function lapText(){if(LAP=='rak')return rreport();if(LAP=='clr')return clrText();if(!Object.keys(M.dates).length)return'Belum ada data muat. Upload laporan WMS di tab Muat.';return LAP=='day'?waDay(statsDay(DAY)):waWeek(statsWeek(WEEK))}
 
 /* ============ EXCEL ============ */
