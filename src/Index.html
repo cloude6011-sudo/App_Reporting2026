@@ -728,6 +728,16 @@ nav{transition:transform .3s cubic-bezier(.2,.9,.3,1)}.nbg{transition:opacity .2
 .cr.qd{border-left:4px solid var(--sel)}.cr.qd .tag{background:var(--selb);color:var(--sel)}
 .qdiff{background:var(--selb);color:#5b3a00;border-radius:.6rem;padding:.35rem .6rem;font-size:.88rem;margin:.3rem 0}
 html.dk .qdiff{background:#3a2c0b;color:#ffe3a3}
+
+.btn.busy{opacity:.75;cursor:progress}
+#toast.act{pointer-events:auto;display:flex;align-items:center;gap:.8rem}
+#toast .tact{background:transparent;border:1px solid currentColor;color:inherit;border-radius:.6rem;padding:.25rem .8rem;font-weight:700;font-size:.95rem}
+.hero2{display:flex;align-items:center;gap:.9rem;padding:.7rem .9rem;border:1px solid var(--line);border-radius:1rem;background:var(--card);margin:.2rem 0 .6rem;box-shadow:var(--sh);animation:ent .25s ease both}
+.ringsvg{width:4.6rem;height:4.6rem;flex:0 0 auto}.rt{fill:none;stroke:var(--line);stroke-width:7}
+.rv{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dasharray .6s ease}
+.hero2.g .rv{stroke:#22c55e}.hero2.y .rv{stroke:#f59e0b}.hero2.r .rv{stroke:#ef4444}
+.ringsvg text{font-size:15px;font-weight:700;fill:var(--ink)}
+.hv b{display:block;font-size:1.05rem}.hv span{color:var(--mute);font-size:.9rem}
 </style></head><body>
 <div id="root"><div class="boot"><div class="spin"></div>Memuat aplikasi…<div class="skel"></div><div class="skel" style="opacity:.7"></div><div class="skel" style="opacity:.45"></div></div></div>
 <script>window.__VIEW=false/*__MODE__*/</script><script>try{if(/[?&]v=dash\b/.test(location.search))window.__VIEW=true}catch(e){}</script>
@@ -758,7 +768,9 @@ const weekLabel=m=>{const e=addDays(m,6),[,m1,d1]=m.split('-'),[y2,m2,d2]=e.spli
 const pct1=(a,b)=>b?(a/b*100).toLocaleString('id-ID',{minimumFractionDigits:1,maximumFractionDigits:1})+'%':'-';
 const hm=ms=>{if(ms==null)return'-';const d=new Date(ms);return pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())};
 const nowStr=()=>{const d=new Date();return`${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`};
-let tt;const toast=m=>{TOASTM=m;emit();clearTimeout(tt);tt=setTimeout(()=>{TOASTM='';emit()},3500)};
+let tt;let TOASTA=null;
+const toastA=(m,l,f,ms)=>{TOASTM=m;TOASTA={l,f};emit();clearTimeout(tt);tt=setTimeout(()=>{TOASTM='';TOASTA=null;emit()},ms||6500)};
+const toast=m=>{TOASTA=null;TOASTM=m;emit();clearTimeout(tt);tt=setTimeout(()=>{TOASTM='';emit()},3500)};
 const LIBS={xlsx:'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',exceljs:'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js',pptx:'https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js'};
 const need=n=>new Promise((res,rej)=>{if((n=='xlsx'&&window.XLSX)||(n=='exceljs'&&window.ExcelJS)||(n=='pptx'&&window.PptxGenJS))return res();const s=document.createElement('script');s.src=LIBS[n];s.onload=res;s.onerror=()=>rej(new Error('Gagal memuat library, cek internet'));document.head.appendChild(s)});
 const copyTxt=async t=>{try{await navigator.clipboard.writeText(t)}catch(e){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy')}catch(x){}a.remove()}};
@@ -794,7 +806,7 @@ function okSheet(o){
   ${auto?html`<div className="okt"><i style=${{animationDuration:auto+'s'}}></i></div>`:null}</div>`);
  if(SHEET)SHEET.ok=id;
  if(auto)setTimeout(()=>{if(SHEET&&SHEET.ok===id)closeSheet()},auto*1000)}
-const TGBTN=(onClick,sm)=>VIEW?null:html`<button className=${'btn tg'+(sm?' sm':'')} onClick=${onClick}>✈️ Telegram</button>`;
+const TGBTN=(onClick,sm)=>VIEW?null:html`<button className=${'btn tg'+(sm?' sm':'')+(TGBUSY?' busy':'')} disabled=${TGBUSY} onClick=${onClick}>${TGBUSY?'⏳ Mengirim…':'✈️ Telegram'}</button>`;
 
 /* ============ STORAGE + SYNC (Apps Script / Sheet) ============ */
 /* Di Apps Script memakai google.script.run; di hosting lain (GitHub Pages) memakai fetch ke API Apps Script (Api.gs) */
@@ -1434,7 +1446,8 @@ const setFS=v=>{FS=v;LS.s('wms_fs',v);applyFS();emit()};
 const DET={};
 const SYNCI={ok:'☁',busy:'⏳',wait:'⏳',err:'⚠️',local:'💾'};
 let MENU=false;const setMenu=v=>{MENU=v;emit()};
-const go=t=>{if(VIEW&&t!='dash'&&t!='lap')return;TAB=t;MENU=false;emit();scrollTo(0,0)};
+function saveUI(){LS.s('wms_ui',{tab:TAB,lap:LAP})}
+const go=t=>{if(VIEW&&t!='dash'&&t!='lap')return;TAB=t;MENU=false;saveUI();emit();scrollTo(0,0)};
 const openSheet=fn=>{SHEET={fn};document.body.classList.add('lock');emit()};
 const closeSheet=()=>{SHEET=null;ASK=null;document.body.classList.remove('lock');emit()};
 const ask=(title,msg,okLabel,fn,bad)=>{ASK=fn;openSheet(()=>html`<h3>${title}</h3><div className="msg">${msg}</div><div className="row"><button className="btn" onClick=${closeSheet}>Batal</button><button className=${'btn '+(bad?'bad':'pri')} onClick=${()=>{const f=ASK;closeSheet();if(f)f()}}>${okLabel}</button></div>`)};
@@ -1453,7 +1466,7 @@ function Header(){const ini=((M.meta.pelapor||'').trim()[0]||'W').toUpperCase();
 const NI={tg:'M22 3 2 11l6 2.5L10 20l3.5-4 5 3.5zM8 13.5 18 6',sync:'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5',home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',rak:'M3 4h18v5H3zM5 9v10h14V9M10 13h4',muat:'M1 6h13v10H1zM14 10h4l3 3v3h-7',lap:'M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5M8 13h8M8 17h6',dash:'M4 20V11M10 20V4M16 20v-6M22 20H2',clr:'M9 12l2 2 4-4M12 3l8 3v6c0 4.5-3.2 7.7-8 9-4.8-1.3-8-4.5-8-9V6z'};
 function Nav(){const T=VIEW?[['dash','Dashboard'],['lap','Laporan']]:[['home','Beranda'],['rak','Cek Rak'],['muat','Muat'],['clr','Clearing'],['dash','Dashboard'],['lap','Laporan']];
  return html`<${F0}><div className=${'nbg'+(MENU?' on':'')} onClick=${()=>setMenu(false)}></div><nav aria-label="Menu utama" className=${MENU?'open':''}><div className="nbrand"><b>WMS Warehouse</b><span>${M.meta.area||''}</span></div>${T.map(([k,l])=>html`<button key=${k} className=${TAB==k?'on':''} aria-current=${TAB==k?'page':null} onClick=${()=>go(k)}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI[k]}/>${k=='muat'?html`<circle cx="5.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>`:null}</svg></i>${l}</button>`)}${VIEW?null:html`<div className="nsep"></div><button onClick=${()=>{setMenu(false);syncNow()}}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI.sync}/></svg></i>Sinkron data</button>`}</nav><//>`}
-function Toast(){return html`<div aria-live="polite" role="status">${TOASTM?html`<div id="toast" className=${/^(✅|✓)/.test(TOASTM)?'ok':''}>${TOASTM}</div>`:null}</div>`}
+function Toast(){return html`<div aria-live="polite" role="status">${TOASTM?html`<div id="toast" role="status" className=${(/^(✅|✓)/.test(TOASTM)?'ok':'')+(TOASTA?' act':'')}>${TOASTM}${TOASTA?html`<button type="button" className="tact" onClick=${()=>{const f=TOASTA.f;TOASTA=null;TOASTM='';emit();f()}}>${TOASTA.l}</button>`:null}</div>`:null}</div>`}
 function Sheet(){const ref=useRef(),gy=useRef(null),open=!!SHEET;
  useEffect(()=>{if(!open)return;const prev=document.activeElement,el=ref.current;if(el){el.setAttribute('tabindex','-1');try{el.focus({preventScroll:true})}catch(e){}}
   const k=e=>{if(e.key!=='Tab'||!ref.current)return;const f=[...ref.current.querySelectorAll('button,input,select,textarea,summary,[tabindex]:not([tabindex="-1"])')].filter(x=>!x.disabled&&x.type!=='hidden'&&x.getClientRects().length);if(!f.length)return;const a=f[0],z=f[f.length-1],c=document.activeElement;
@@ -1877,20 +1890,20 @@ function Lap(){const ds=Object.keys(M.dates).sort();if(!DAY||!M.dates[DAY])DAY=d
  const gen=lapText(),sig=gen.replace(/_Update: [^\n]*_/,''),[txt,setTxt]=useState(gen),last=useRef(sig);if(last.current!==sig){last.current=sig;setTxt(gen)}
  const weeks=[...new Set(ds.map(monday))].sort().reverse();
  return html`<${F0}>
-  <${Seg} cur=${LAP} onPick=${v=>{LAP=v;emit()}} items=${[['rak','Cek Rak'],['day','Muat Harian'],['week','Muat Mingguan'],['clr','Clearing']]}/>
+  <${Seg} cur=${LAP} onPick=${v=>{LAP=v;saveUI();emit()}} items=${[['rak','Cek Rak'],['day','Muat Harian'],['week','Muat Mingguan'],['clr','Clearing']]}/>
   <div className="card">
    ${LAP=='rak'?html`<div className="row" style=${{marginTop:0}}><div><label className="l">Petugas</label><input value=${R.pet||''} placeholder="Nama petugas" onChange=${e=>{R.pet=e.target.value;persist('rak');emit()}}/></div><div><label className="l">Tanggal cek</label><input type="date" value=${R.tgl} onChange=${e=>setTgl(e.target.value)}/></div></div>`
    :LAP=='day'?(ds.length?html`<label className="l">Tanggal laporan</label><select value=${DAY} onChange=${e=>{DAY=e.target.value;emit()}}>${ds.slice().reverse().map(d=>html`<option key=${d} value=${d}>${longD(d)}</option>`)}</select>`:null)
    :LAP=='clr'?html`<div className="mute">Isi dari hasil import terakhir di tab Clearing${CL.fn?' ('+CL.fn+')':''}. <button className="btn sm" style=${{marginLeft:'.4rem'}} onClick=${()=>go('clr')}>Buka tab Clearing</button></div>`
    :(ds.length?html`<label className="l">Minggu</label><select value=${WEEK} onChange=${e=>{WEEK=e.target.value;emit()}}>${weeks.map(w=>html`<option key=${w} value=${w}>${weekLabel(w)}</option>`)}</select>`:null)}
    <label className="l">Isi laporan (boleh diedit sebelum dikirim)</label><textarea spellCheck="false" autoCapitalize="off" value=${txt} onChange=${e=>setTxt(e.target.value)}></textarea>
-   <div className="row acts">${VIEW?null:html`<button className="btn pri" onClick=${()=>tgKirim(txt,{rak:'Laporan Cek Rak',day:'Laporan Muat Harian',week:'Laporan Muat Mingguan',clr:'Laporan Clearing'}[LAP]||'Laporan')}>✈️ Kirim ke Telegram</button>`}<button className=${'btn'+(VIEW?' pri':'')} onClick=${async()=>{await copyTxt(txt);toast('Laporan disalin')}}>Salin</button><button className="btn" onClick=${()=>openSheet(()=>html`<h3>Bagikan laporan</h3><div className="shr"><button className="btn block" onClick=${()=>{closeSheet();window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')}}>WhatsApp</button><button className="btn block" onClick=${async()=>{closeSheet();try{await navigator.share({title:'Laporan WMS',text:txt})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Aplikasi lain…</button><button className="btn block" onClick=${closeSheet}>Batal</button></div>`)}>⋯ Bagikan</button></div>
+   <div className="row acts">${VIEW?null:html`<button className=${'btn pri'+(TGBUSY?' busy':'')} disabled=${TGBUSY} onClick=${()=>tgKirim(txt,{rak:'Laporan Cek Rak',day:'Laporan Muat Harian',week:'Laporan Muat Mingguan',clr:'Laporan Clearing'}[LAP]||'Laporan')}>${TGBUSY?'⏳ Mengirim…':'✈️ Kirim ke Telegram'}</button>`}<button className=${'btn'+(VIEW?' pri':'')} onClick=${async()=>{await copyTxt(txt);toast('Laporan disalin')}}>Salin</button><button className="btn" onClick=${()=>openSheet(()=>html`<h3>Bagikan laporan</h3><div className="shr"><button className="btn block" onClick=${()=>{closeSheet();window.open('https://wa.me/?text='+encodeURIComponent(txt),'_blank')}}>WhatsApp</button><button className="btn block" onClick=${async()=>{closeSheet();try{await navigator.share({title:'Laporan WMS',text:txt})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Aplikasi lain…</button><button className="btn block" onClick=${closeSheet}>Batal</button></div>`)}>⋯ Bagikan</button></div>
    ${LAP=='rak'?html`<div className="row"><button className="btn" onClick=${()=>openSheet(()=>html`<${AdjSheet}/>`)}>⬇ Tarikan adjustment (${rsum().adj} rak)</button></div>`:null}
    ${LAP=='clr'&&clMatch()?html`<div className="row"><button className="btn" onClick=${clExport}>⬇ Unduh hasil (.xlsx)</button></div>`:null}
    ${LAP!='rak'&&LAP!='clr'&&ds.length?html`<div className="row"><button className="btn" onClick=${async()=>{try{toast('Membuat Excel…');await(LAP=='day'?excelDay():excelWeek())}catch(e){toast('Gagal: '+e.message)}}}>⬇ Unduh Excel ${LAP=='day'?'Harian':'Mingguan'}</button><button className="btn pri" onClick=${async()=>{try{toast('Membuat presentasi…');await pptReport();toast('Presentasi (PPT) siap diunduh')}catch(e){toast('Gagal: '+e.message)}}}>Unduh Presentasi (PPT)</button></div>`:null}
   </div>
   <details className="card fold adminonly" open=${!!DET.adm} onToggle=${e=>{DET.adm=e.target.open}}><summary>🛠 Admin: Riset & Rekap Sheet</summary>
-  ${VIEW?null:html`<div style=${{padding:'.3rem 0 .6rem'}}><b>Riset Data bulan ini</b><div className="mute">KPI bulan ini vs bulan lalu, temuan otomatis, PIC dan rak bermasalah. Disusun dari Google Sheet lalu dikirim ke Telegram.</div><div className="row"><button className="btn tg" onClick=${()=>tgRiset(false)}>✈️ Kirim Riset ke Telegram</button></div></div>`}
+  ${VIEW?null:html`<div style=${{padding:'.3rem 0 .6rem'}}><b>Riset Data bulan ini</b><div className="mute">KPI bulan ini vs bulan lalu, temuan otomatis, PIC dan rak bermasalah. Disusun dari Google Sheet lalu dikirim ke Telegram.</div><div className="row"><button className=${'btn tg'+(TGBUSY?' busy':'')} disabled=${TGBUSY} onClick=${()=>tgRiset(false)}>${TGBUSY?'⏳ Mengirim…':'✈️ Kirim Riset ke Telegram'}</button></div></div>`}
   <div style=${{paddingTop:'.3rem'}}><b>Rekap & Monitoring (Google Sheet)</b>
    ${(()=>{const st=ds.map(statsDay),miss=st.filter(s=>!s.tMob).length,bel=st.reduce((a,s)=>a+(s.spmWms-s.checked),0),m=rsum();
     const sy=RK.busy?['w','⏳','Mengirim ke Sheet…']:RK.err?['r','⚠️','Gagal kirim: '+RK.err]:RK.t?['g','✅','Terakhir terkirim '+RK.t]:GS?['w','⏳','Belum dikirim']:['','💾','Mode lokal (tanpa Sheet)'];
@@ -2151,7 +2164,7 @@ function Clr(){
  const cells=i=>{const r=d.rows[i];return H.map((h,c)=>[h,r[c],c]).filter(([h,v,c])=>c!==CL.col&&String(v).trim()!=='')};
  let list=[],cnt={};
  if(m){const q=CL.q.trim().toLowerCase();cnt={all:m.no.length+m.ok.length,ok:m.ok.length,no:m.no.length,of:m.of.length,qd:m.qd.length};
-  const src=CL.f=='ok'?m.ok:CL.f=='no'?m.no:CL.f=='of'?m.of:CL.f=='qd'?m.qd:m.no.concat(m.ok);
+  const src=CL.f=='ok'?m.ok:CL.f=='no'?m.no:CL.f=='of'?m.of:CL.f=='qd'?m.qd:m.no.concat(m.ok.filter(x=>x.qd||x.idf),m.ok.filter(x=>!x.qd&&!x.idf));
   list=q?src.filter(x=>(x.v+' '+(x.o?Object.values(x.o).join(' '):'')+' '+x.rows.slice(0,3).map(i=>d.rows[i].join(' ')).join(' ')).toLowerCase().includes(q)):src}
  const pg=list.slice(0,CL.lim),tot=m?m.ok.length+m.no.length:0;
  return html`<${F0}>
@@ -2164,9 +2177,10 @@ function Clr(){
     <label className="l">Kolom tanggal (nomor ganda: dipakai tanggal terakhir)</label><select value=${CL.dcol} onChange=${e=>{CL.dcol=+e.target.value;CL.dman=true;emit()}}><option value="-1">— tidak ada: pakai baris paling bawah —</option>${H.map((h,i)=>html`<option key=${i} value=${i}>${h||'(kolom '+(i+1)+')'}</option>`)}</select>
     <label className="l">Kolom qty di CLEARING (untuk dibandingkan dengan qty laporan)</label><select value=${CL.qcol==null?-1:CL.qcol} onChange=${e=>{CL.qcol=+e.target.value;CL.qman=true;emit()}}><option value="-1">— tidak dibandingkan —</option>${H.map((h,i)=>html`<option key=${i} value=${i}>${h||'(kolom '+(i+1)+')'}</option>`)}</select>
     <label className="l">Kolom kode item di CLEARING (opsional)</label><select value=${CL.icol==null?-1:CL.icol} onChange=${e=>{CL.icol=+e.target.value;CL.iman=true;emit()}}><option value="-1">— tidak dibandingkan —</option>${H.map((h,i)=>html`<option key=${i} value=${i}>${h||'(kolom '+(i+1)+')'}</option>`)}</select></details>`:null}</div>
-  ${m?html`<div className="cs"><span><b>${tot}</b>voucher</span><span className="g"><b>${m.full.length}</b>cocok (voucher+qty) · ${pct1(m.full.length,tot)}</span>${m.qi>=0?html`<span className=${m.qd.length?'r':'g'}><b>${m.qd.length}</b>qty beda</span>`:html`<span className="r"><b>!</b>qty tidak terdeteksi</span>`}<span className=${m.no.length?'r':'g'}><b>${m.no.length}</b>belum di CLEARING</span><span><b>${m.of.length}</b>hanya di CLEARING</span></div>
+  ${m?html`${(()=>{const full=m.full.length,pv=tot?full/tot:0,perlu=m.no.length+(m.qi>=0?m.qd.length:0)+m.idf.filter(x=>!x.qd).length,tone=pv>=.95?'g':pv>=.85?'y':'r',C=2*Math.PI*26;
+   return html`<div className=${'hero2 '+tone}><svg viewBox="0 0 64 64" className="ringsvg" role="img" aria-label=${'Cocok '+Math.round(pv*100)+' persen'}><circle cx="32" cy="32" r="26" className="rt"/><circle cx="32" cy="32" r="26" className="rv" strokeDasharray=${(pv*C).toFixed(1)+' '+C.toFixed(1)} transform="rotate(-90 32 32)"/><text x="32" y="37" textAnchor="middle">${Math.round(pv*100)}%</text></svg><div className="hv"><b>${perlu?'⚠️ '+perlu+' voucher perlu dicek':'✅ Semua voucher cocok'}</b><span>${perlu?[m.no.length&&m.no.length+' belum ditemukan',m.qi>=0&&m.qd.length&&m.qd.length+' selisih qty'].filter(Boolean).join(' · '):'Voucher dan qty sesuai hasil counting'}</span></div></div>`})()}<div className="cs"><span><b>${tot}</b>voucher</span><span className="g"><b>${m.full.length}</b>cocok (voucher+qty) · ${pct1(m.full.length,tot)}</span>${m.qi>=0?html`<span className=${m.qd.length?'r':'g'}><b>${m.qd.length}</b>qty beda</span>`:html`<span className="r"><b>!</b>qty tidak terdeteksi</span>`}<span className=${m.no.length?'r':'g'}><b>${m.no.length}</b>belum di CLEARING</span><span><b>${m.of.length}</b>hanya di CLEARING</span></div>
    <div className="prog"><div style=${{width:(tot?m.full.length/tot*100:0)+'%'}}></div></div>
-   <div className="cact"><button className="btn pri sm" disabled=${!!CL.sv.busy} onClick=${()=>clSave(false)}>${CL.sv.busy?'⏳ Menyimpan…':'💾 Simpan'}</button><button className="btn sm" disabled=${!!CL.sv.busy} onClick=${()=>ask('Reset upload?','Hasil upload ini dikosongkan. Data di Sheet tidak berubah.','Reset',()=>{clReset();toast('Upload dikosongkan')},1)}>↺ Reset</button><button className="btn sm" onClick=${async()=>{await copyTxt(clrText());toast('Laporan disalin')}}>Salin</button>${TGBTN(()=>tgKirim(clrText(),'Laporan Clearing'),true)}<button className="btn sm" onClick=${()=>window.open('https://wa.me/?text='+encodeURIComponent(clrText()),'_blank')}>WhatsApp</button><button className="btn sm" onClick=${async()=>{try{await navigator.share({title:'Laporan Clearing',text:clrText()})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Bagikan</button><button className="btn sm" onClick=${clExport}>⬇ Excel</button></div>
+   <div className="cact"><button className="btn pri sm" disabled=${!!CL.sv.busy} onClick=${()=>clSave(false)}>${CL.sv.busy?'⏳ Menyimpan…':'💾 Simpan'}</button><button className="btn sm" disabled=${!!CL.sv.busy} onClick=${()=>ask('Reset upload?','Hasil upload ini dikosongkan. Data di Sheet tidak berubah.','Reset',()=>{const sn={up:CL.up,fn:CL.fn};clReset();toastA('Upload dikosongkan','Urungkan',()=>{CL.up=sn.up;CL.fn=sn.fn;clBuild();clAuto();emit()})},1)}>↺ Reset</button><button className="btn sm" onClick=${async()=>{await copyTxt(clrText());toast('Laporan disalin')}}>Salin</button>${TGBTN(()=>tgKirim(clrText(),'Laporan Clearing'),true)}<button className="btn sm" onClick=${()=>window.open('https://wa.me/?text='+encodeURIComponent(clrText()),'_blank')}>WhatsApp</button><button className="btn sm" onClick=${async()=>{try{await navigator.share({title:'Laporan Clearing',text:clrText()})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Bagikan</button><button className="btn sm" onClick=${clExport}>⬇ Excel</button></div>
    <div className="mute" style=${{fontSize:'.8rem',margin:'.1rem 0 .3rem'}}>${CL.sv.err?html`<span style=${{color:'var(--bed)'}}>⚠️ Gagal simpan: ${CL.sv.err}</span>`:CL.sv.at?(CL.sv.tg&&CL.sv.tg.state=='fail'?'⚠️':'✓')+' Disimpan '+CL.sv.at+' · '+CL.sv.msg:'Simpan = catat hasil di Sheet'+(CL.tg?(CL.tg.on?' + kirim laporan ke Telegram ('+CL.tg.n+' chat)':CL.tg.set?' · Telegram nonaktif':' · Telegram belum diatur'):'')} <button className="btn sm" style=${{minHeight:'1.8rem',padding:'.1rem .5rem',marginLeft:'.3rem'}} onClick=${openTg}>⚙ Telegram</button></div>
    <${Pick} title="Filter hasil" pre="Tampilkan" items=${[['all','Semua ('+cnt.all+')'],['no','Belum di CLEARING ('+cnt.no+')'],['ok','Cocok ('+cnt.ok+')'],['qd','Qty beda ('+cnt.qd+')'],['of','Hanya di CLEARING ('+cnt.of+')']]} cur=${CL.f} onPick=${k=>{CL.f=k;CL.lim=60;emit()}}/>
    <input type="search" placeholder="Cari voucher / item…" value=${CL.q} onInput=${e=>{CL.q=e.target.value;CL.lim=60;emit()}}/>
@@ -2216,6 +2230,7 @@ function App(){const [,tick]=useReducer(x=>x+1,0);useEffect(()=>{linkLabels()});
 
 /* ============ START ============ */
 function boot(){
+ try{const u=LS.g('wms_ui',{});if(['rak','muat','clr','dash','lap'].includes(u.tab)&&(!VIEW||u.tab==='dash'||u.tab==='lap'))TAB=u.tab;if(['rak','day','week','clr'].includes(u.lap))LAP=u.lap}catch(e){}
  applyFS();applyTheme();try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(TH=='auto')applyTheme()})}catch(e){}
  setSync(GS?'ok':'local');LASTDAY=today();
  {let ly=window.scrollY||0,tk=false;window.addEventListener('scroll',()=>{if(tk)return;tk=true;requestAnimationFrame(()=>{const y=window.scrollY||0,B=document.body;if(y<80||y<ly-6||MENU||SHEET)B.classList.remove('bar-hide');else if(y>ly+6)B.classList.add('bar-hide');ly=y;tk=false})},{passive:true})}

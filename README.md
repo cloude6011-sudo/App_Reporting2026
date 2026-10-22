@@ -59,6 +59,12 @@ No lori dan PIC diambil otomatis dari kolom file upload atau tab CLEARING bila h
 ### Laporan Muat (Harian & Mingguan)
 Berisi proses WMS (A), hasil muat (B), per PIC (C), alasan tidak diproses WMS (D), dan perlu tindak lanjut (E). Bagian counting checker (SKU selisih, SPM belum ada hasil counting, dan baris "Sudah dicek checker") **tidak lagi** ada di laporan Muat; rekonsiliasi counting ada di laporan Clearing. Data counting tetap tersedia di aplikasi dan Excel.
 
+### Kenyamanan pemakaian
+- Aplikasi mengingat tab dan jenis laporan terakhir yang dibuka, sehingga tidak mulai dari nol.
+- Hasil Clearing ditampilkan dengan cincin persen (hijau/kuning/merah), voucher bermasalah di urutan atas.
+- Aksi yang bisa disesali (mis. Reset upload) memberi toast dengan tombol **Urungkan**.
+- Tombol kirim Telegram menunjukkan "Mengirim…" dan mencegah kirim ganda saat diketuk berulang.
+
 ### Format laporan Clearing (Telegram / Salin / WhatsApp)
 Judul **📊 LAPORAN REKONSILIASI VOUCHER WMS**, nama gudang (dari pengaturan), tanggal, nama file, lalu bagian bernomor yang menyesuaikan isi:
 1. Hasil rekonsiliasi (total voucher, hasil counting, belum ditemukan, selisih qty, kecocokan nomor voucher, status) 
