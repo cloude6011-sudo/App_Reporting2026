@@ -1948,7 +1948,7 @@ function rknCalc(){const Q=RKN.q;if(!Q)return null;const c=Q.c,qa={},wm={};let d
  const sq=new Set(Object.values(qa).map(x=>x.spm)),sw=new Set(Object.values(wm).map(x=>x.spm)),both=[...sq].filter(x=>sw.has(x)).length;
  const n=st=>L.filter(x=>x.st===st).length,tq=L.reduce((a,x)=>a+(x.qa||0),0),tw=L.reduce((a,x)=>a+(x.qw||0),0);
  return{L,nQ:sq.size,nW:sw.size,both,ok:n('ok'),diff:n('diff'),w:n('w'),q:n('q'),tq,tw,tot:L.length,range:dmin?isoD(dmin)+(dmax!==dmin?' – '+isoD(dmax):''):'semua tanggal'}}
-const srcDateIso=v=>{if(v instanceof Date)return v.toISOString().slice(0,10);const t=String(v==null?'':v).trim();let m=t.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');m=t.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''};
+const srcDateIso=v=>{if(typeof v==='number'&&v>20000&&v<80000)return new Date(Math.floor(v-25569)*864e5).toISOString().slice(0,10);if(v instanceof Date)return v.toISOString().slice(0,10);const t=String(v==null?'':v).trim();let m=t.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');m=t.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''};
 function rknText(){const C=rknCalc();if(!C)return'Belum ada import. Upload file QAD di menu Rekon QAD.';
  const d0=new Date(),pd=n=>String(n).padStart(2,'0'),p2=(a,b)=>b?(a/b*100).toFixed(2).replace('.',',')+'%':'-',clean=!C.diff&&!C.w&&!C.q;
  const L=['📊 *LAPORAN REKONSILIASI MUAT WMS vs QAD*'];if(M.meta.area)L.push(M.meta.area);
