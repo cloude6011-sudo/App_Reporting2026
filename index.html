@@ -738,6 +738,14 @@ html.dk .qdiff{background:#3a2c0b;color:#ffe3a3}
 .hero2.g .rv{stroke:#22c55e}.hero2.y .rv{stroke:#f59e0b}.hero2.r .rv{stroke:#ef4444}
 .ringsvg text{font-size:15px;font-weight:700;fill:var(--ink)}
 .hv b{display:block;font-size:1.05rem}.hv span{color:var(--mute);font-size:.9rem}
+
+.drop{display:block;text-align:center;border:2px dashed var(--line);border-radius:1rem;padding:1.1rem .8rem;margin:.7rem 0;cursor:pointer;transition:border-color .18s,background-color .18s}
+.drop:hover,.drop:focus-within{border-color:var(--pri);background:var(--prib)}.drop b{display:block;font-size:1.05rem}.drop small{display:block;color:var(--mute);margin-top:.2rem}
+.srch{width:100%;min-height:2.7rem;border:1px solid var(--line);border-radius:.8rem;padding:.4rem .8rem;margin:.1rem 0 .6rem;background:var(--card);color:var(--ink)}
+.rkl{border:1px solid var(--line);border-left:5px solid var(--line);border-radius:.9rem;background:var(--card);padding:.6rem .8rem;margin:.45rem 0;animation:ent .2s ease both}
+.rkl.g{border-left-color:#22c55e}.rkl.r{border-left-color:#ef4444}.rkl.y{border-left-color:#f59e0b}.rkl.b{border-left-color:#3b82f6}
+.rkl .rh{display:flex;justify-content:space-between;gap:.5rem;align-items:center}.rkl .rq{display:flex;gap:.9rem;flex-wrap:wrap;margin:.25rem 0}.rkl .rq .r b{color:#dc2626}.rkl .rq .g b{color:#16a34a}
+.tag{font-size:.78rem;font-weight:700;border-radius:99px;padding:.1rem .6rem;border:1px solid currentColor}.tag.g{color:#16a34a}.tag.r{color:#dc2626}.tag.y{color:#b45309}.tag.b{color:#2563eb}
 </style></head><body>
 <div id="root"><div class="boot"><div class="spin"></div>Memuat aplikasi…<div class="skel"></div><div class="skel" style="opacity:.7"></div><div class="skel" style="opacity:.45"></div></div></div>
 <script>window.__VIEW=false/*__MODE__*/</script><script>try{if(/[?&]v=dash\b/.test(location.search))window.__VIEW=true}catch(e){}</script>
@@ -1463,8 +1471,8 @@ function syncReasons(d=DAY){const D=M.dates[d];D.reasons=D.reasons||[];const n=s
 const TITLES={home:'WMS Warehouse',rak:'Cek Rak',muat:'Kontrol Muat',dash:'Dashboard KPI',lap:'Laporan',clr:'Clearing'};
 function Header(){const ini=((M.meta.pelapor||'').trim()[0]||'W').toUpperCase();
  return html`<header className="bar"><button className="hb" onClick=${()=>setMenu(!MENU)} aria-label="Menu" aria-expanded=${MENU}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><button className="av" onClick=${()=>go('home')} aria-label="Ke Beranda">${ini}</button><b role="heading" aria-level="1">${VIEW&&TAB=='dash'?(M.meta.area||'KPI WMS')+' · Dashboard':TITLES[TAB]}</b><button className=${'sy'+(SYNC=='busy'?' spin':'')+(SYNC=='err'?' err':'')+(SYNC=='wait'?' wt':'')} onClick=${syncNow} aria-label=${'Sinkron data: '+STL[SYNC]} title=${STL[SYNC]}><span className="ic">${SYNCI[SYNC]}</span><span className="lb">${STL[SYNC]}</span></button></header>`}
-const NI={tg:'M22 3 2 11l6 2.5L10 20l3.5-4 5 3.5zM8 13.5 18 6',sync:'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5',home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',rak:'M3 4h18v5H3zM5 9v10h14V9M10 13h4',muat:'M1 6h13v10H1zM14 10h4l3 3v3h-7',lap:'M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5M8 13h8M8 17h6',dash:'M4 20V11M10 20V4M16 20v-6M22 20H2',clr:'M9 12l2 2 4-4M12 3l8 3v6c0 4.5-3.2 7.7-8 9-4.8-1.3-8-4.5-8-9V6z'};
-function Nav(){const T=VIEW?[['dash','Dashboard'],['lap','Laporan']]:[['home','Beranda'],['rak','Cek Rak'],['muat','Muat'],['clr','Clearing'],['dash','Dashboard'],['lap','Laporan']];
+const NI={rkn:'M8 4 4 8l4 4M4 8h13M16 20l4-4-4-4M20 16H7',tg:'M22 3 2 11l6 2.5L10 20l3.5-4 5 3.5zM8 13.5 18 6',sync:'M20 12a8 8 0 1 1-2.3-5.7M20 4v5h-5',home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',rak:'M3 4h18v5H3zM5 9v10h14V9M10 13h4',muat:'M1 6h13v10H1zM14 10h4l3 3v3h-7',lap:'M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8zM14 3v5h5M8 13h8M8 17h6',dash:'M4 20V11M10 20V4M16 20v-6M22 20H2',clr:'M9 12l2 2 4-4M12 3l8 3v6c0 4.5-3.2 7.7-8 9-4.8-1.3-8-4.5-8-9V6z'};
+function Nav(){const T=VIEW?[['dash','Dashboard'],['lap','Laporan']]:[['home','Beranda'],['rak','Cek Rak'],['muat','Muat'],['clr','Clearing'],['rkn','Rekon QAD'],['dash','Dashboard'],['lap','Laporan']];
  return html`<${F0}><div className=${'nbg'+(MENU?' on':'')} onClick=${()=>setMenu(false)}></div><nav aria-label="Menu utama" className=${MENU?'open':''}><div className="nbrand"><b>WMS Warehouse</b><span>${M.meta.area||''}</span></div>${T.map(([k,l])=>html`<button key=${k} className=${TAB==k?'on':''} aria-current=${TAB==k?'page':null} onClick=${()=>go(k)}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI[k]}/>${k=='muat'?html`<circle cx="5.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>`:null}</svg></i>${l}</button>`)}${VIEW?null:html`<div className="nsep"></div><button onClick=${()=>{setMenu(false);syncNow()}}><i className="ni"><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI.sync}/></svg></i>Sinkron data</button>`}</nav><//>`}
 function Toast(){return html`<div aria-live="polite" role="status">${TOASTM?html`<div id="toast" role="status" className=${(/^(✅|✓)/.test(TOASTM)?'ok':'')+(TOASTA?' act':'')}>${TOASTM}${TOASTA?html`<button type="button" className="tact" onClick=${()=>{const f=TOASTA.f;TOASTA=null;TOASTM='';emit();f()}}>${TOASTA.l}</button>`:null}</div>`:null}</div>`}
 function Sheet(){const ref=useRef(),gy=useRef(null),open=!!SHEET;
@@ -1519,7 +1527,7 @@ function Home(){const m=rsum(),ds=Object.keys(M.dates).sort(),last=ds[ds.length-
    <button className="tile" onClick=${()=>go('muat')}><small>Mobil WMS</small><span className="num">${S?(S.tMob?pct1(S.mobWms,S.tMob):S.mobWms):'–'}</span><div className="prog"><div style=${{width:(S&&S.tMob?Math.min(100,S.mobWms/S.tMob*100):0)+'%'}}></div></div><span className="mute">${S?dayName(last)+' '+isoD(last).slice(0,5)+' · '+S.spmWms+' SPM':'Belum ada data'}</span></button>
   </div>
   ${NEXT}
-  <div className="mg" role="navigation" aria-label="Menu">${[['rak','Cek Rak','Kesesuaian & SO rak',()=>go('rak')],['muat','Muat','Kontrol muat WMS',()=>go('muat')],['clr','Clearing','Cocokkan voucher',()=>go('clr')],['dash','Dashboard','KPI & tren',()=>go('dash')],['lap','Laporan','Salin / WhatsApp',()=>go('lap')],['tg','Telegram','Laporan otomatis',openTg],['sync','Sinkron','Kirim & tarik data',syncNow]].map(([k,t,s,fn])=>html`<button key=${k} onClick=${fn}><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI[k]}/>${k=='muat'?html`<circle cx="5.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>`:null}</svg></i><span><b>${t}</b><small>${s}</small></span></button>`)}</div>
+  <div className="mg" role="navigation" aria-label="Menu">${[['rak','Cek Rak','Kesesuaian & SO rak',()=>go('rak')],['muat','Muat','Kontrol muat WMS',()=>go('muat')],['clr','Clearing','Cocokkan voucher',()=>go('clr')],['rkn','Rekon QAD','Muat WMS vs QAD',()=>go('rkn')],['dash','Dashboard','KPI & tren',()=>go('dash')],['lap','Laporan','Salin / WhatsApp',()=>go('lap')],['tg','Telegram','Laporan otomatis',openTg],['sync','Sinkron','Kirim & tarik data',syncNow]].map(([k,t,s,fn])=>html`<button key=${k} onClick=${fn}><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d=${NI[k]}/>${k=='muat'?html`<circle cx="5.5" cy="18" r="1.8"/><circle cx="17.5" cy="18" r="1.8"/>`:null}</svg></i><span><b>${t}</b><small>${s}</small></span></button>`)}</div>
   <${Fold} id="set" title="⚙️ Pengaturan">
    <label className="l">Ukuran huruf</label><${Seg} cur=${FS} onPick=${setFS} items=${[[1,'Normal'],[1.15,'Besar'],[1.3,'Sangat besar']]}/>
    <label className="l">Tema</label><${Seg} cur=${TH} onPick=${setTheme} items=${[['light','Terang'],['auto','Otomatis'],['dark','Gelap']]}/>
@@ -1915,6 +1923,61 @@ function Lap(){const ds=Object.keys(M.dates).sort();if(!DAY||!M.dates[DAY])DAY=d
     <div className="mute">Tab Sheet: Harian · Mingguan · Bulanan · Selisih_SKU · Selisih_PIC · Selisih_Bulanan (terkirim otomatis), Rak · Rak_Detail (dikirim saat tombol Simpan SO Rak ditekan), Log.</div>`})()}
    <div className="row"><button className="btn pri" disabled=${RK.busy} onClick=${async()=>{await pushRekap(false);await pushRak(true)}}>⬆ Kirim rekap sekarang</button><button className="btn" onClick=${openRekap}>Buka Sheet</button></div></div></details><//>`}
 
+/* ========== REKONSILIASI MUAT WMS vs QAD (no SPM QAD = kolom "Comment Data[01]") ========== */
+const RKN={fn:'',q:null,f:'perlu',s:'',lim:60};
+const RKAL={spm:/comment\s*data\s*\[?\s*0?1\s*\]?/i,item:/container\s*item|^item(\s*number)?$|kode\s*item/i,qty:/quantity\s*shipped|qty\s*shipped|qty\s*out/i,tgl:/ship\s*date|tgl\s*kirim/i,id:/^id$|shipper|surat\s*jalan/i,desc:/item\s*description|deskripsi|nama\s*item/i,uom:/unit\s*of\s*measure|^uom$|satuan/i};
+const spmKey=x=>String(x==null?'':x).trim().replace(/\.0+$/,'').replace(/^0+(?=\d)/,'');
+async function rknImport(f){if(!f)return;
+ try{await need('xlsx');const wb=XLSX.read(await f.arrayBuffer(),{type:'array',raw:true});let pick=null;
+  for(const n of wb.SheetNames){const a=XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:'',raw:true});
+   const hi=a.findIndex(r=>r.some(c=>RKAL.spm.test(String(c)))&&r.some(c=>RKAL.qty.test(String(c))));if(hi>=0){pick={H:a[hi].map(c=>String(c).trim()),rows:a.slice(hi+1)};break}}
+  if(!pick)return toast('Kolom "Comment Data[01]" (no SPM) dan "Quantity Shipped" tidak ditemukan di file ini');
+  const c={};Object.keys(RKAL).forEach(k=>{c[k]=pick.H.findIndex(h=>RKAL[k].test(h))});
+  RKN.q={H:pick.H,rows:pick.rows.filter(r=>spmKey(r[c.spm])!==''),c};RKN.fn=f.name;RKN.f='perlu';RKN.s='';RKN.lim=60;emit();
+  toast(RKN.q.rows.length+' baris QAD dibaca · '+new Set(RKN.q.rows.map(r=>spmKey(r[c.spm]))).size+' SPM')}
+ catch(e){toast('Gagal membaca file: '+(e.message||e))}}
+/* hitung perbandingan per SPM + item: qty keluar WMS (muat) vs qty Shipped QAD */
+function rknCalc(){const Q=RKN.q;if(!Q)return null;const c=Q.c,qa={},wm={};let dmin='',dmax='';
+ Q.rows.forEach(r=>{const sp=spmKey(r[c.spm]),it=String(r[c.item]==null?'':r[c.item]).trim(),k=sp+'|'+it.toLowerCase(),q=qtyN(r[c.qty])||0,o=qa[k]||(qa[k]={spm:sp,item:it,desc:c.desc>=0?String(r[c.desc]):'',uom:c.uom>=0?String(r[c.uom]):'',id:c.id>=0?String(r[c.id]):'',qty:0});o.qty+=q;
+  const d=c.tgl>=0?srcDateIso(r[c.tgl]):'';if(d){if(!dmin||d<dmin)dmin=d;if(!dmax||d>dmax)dmax=d}});
+ const lo=dmin?new Date(Date.parse(dmin)-864e5).toISOString().slice(0,10):'',hi=dmax?new Date(Date.parse(dmax)+864e5).toISOString().slice(0,10):'';
+ Object.keys(M.dates).forEach(d=>{if(lo&&(d<lo||d>hi))return;(M.dates[d].rows||[]).forEach(r=>{const sp=spmKey(r.spm),k=sp+'|'+String(r.item||'').trim().toLowerCase(),o=wm[k]||(wm[k]={spm:sp,item:String(r.item||'').trim(),desc:r.desc||'',date:d,pic:r.pic||'',nopol:r.nopol||'',qty:0,chk:0});o.qty+=+r.qtyMuat||0;o.chk+=+r.qtySpm||0})});
+ const L=[];new Set([...Object.keys(qa),...Object.keys(wm)]).forEach(k=>{const a=qa[k],w=wm[k],o={k,spm:(a||w).spm,item:(a||w).item,desc:(a&&a.desc)||(w&&w.desc)||'',qa:a?a.qty:null,qw:w?w.qty:null,chk:w?w.chk:null,uom:a?a.uom:'',pic:w?w.pic:'',nopol:w?w.nopol:'',id:a?a.id:'',date:w?w.date:''};
+  o.st=a&&w?(Math.abs(a.qty-w.qty)<1e-6?'ok':'diff'):(w?'w':'q');o.d=a&&w?a.qty-w.qty:null;o.adj=w?w.qty-w.chk:null;L.push(o)});
+ const rank={diff:0,w:1,q:2,ok:3};L.sort((x,y)=>rank[x.st]-rank[y.st]||String(x.spm).localeCompare(y.spm)||String(x.item).localeCompare(y.item));
+ const sq=new Set(Object.values(qa).map(x=>x.spm)),sw=new Set(Object.values(wm).map(x=>x.spm)),both=[...sq].filter(x=>sw.has(x)).length;
+ const n=st=>L.filter(x=>x.st===st).length,tq=L.reduce((a,x)=>a+(x.qa||0),0),tw=L.reduce((a,x)=>a+(x.qw||0),0);
+ return{L,nQ:sq.size,nW:sw.size,both,ok:n('ok'),diff:n('diff'),w:n('w'),q:n('q'),tq,tw,tot:L.length,range:dmin?isoD(dmin)+(dmax!==dmin?' – '+isoD(dmax):''):'semua tanggal'}}
+const srcDateIso=v=>{if(v instanceof Date)return v.toISOString().slice(0,10);const t=String(v==null?'':v).trim();let m=t.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);if(m)return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');m=t.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):''};
+function rknText(){const C=rknCalc();if(!C)return'Belum ada import. Upload file QAD di menu Rekon QAD.';
+ const d0=new Date(),pd=n=>String(n).padStart(2,'0'),p2=(a,b)=>b?(a/b*100).toFixed(2).replace('.',',')+'%':'-',clean=!C.diff&&!C.w&&!C.q;
+ const L=['📊 *LAPORAN REKONSILIASI MUAT WMS vs QAD*'];if(M.meta.area)L.push(M.meta.area);
+ L.push('','Periode data: '+C.range,'File QAD: '+(RKN.fn||'-'),'',LINE,'','*1. HASIL REKONSILIASI*','','Total SPM QAD : '+C.nQ,'Total SPM WMS (periode QAD) : '+C.nW,'SPM ada di kedua sistem : '+C.both,'Total baris (SPM + item) : '+C.tot,'Baris cocok qty : '+C.ok,'Selisih qty : '+C.diff+' baris','Hanya di WMS : '+C.w+' baris','Hanya di QAD : '+C.q+' baris','Kecocokan : '+p2(C.ok,C.tot),'','Status Rekonsiliasi : '+(clean?'SELESAI':'BELUM SELESAI'));
+ const cap=(a,f,n)=>{n=n||15;a.slice(0,n).forEach(x=>L.push(f(x)));if(a.length>n)L.push('_… dan '+(a.length-n)+' lainnya_')};
+ let n=2;
+ if(C.diff){L.push('',`*${n++}. SELISIH QTY (${C.diff} baris)*`);cap(C.L.filter(x=>x.st==='diff'),x=>'• '+x.spm+' | '+x.item+' | WMS '+fmt(x.qw)+' vs QAD '+fmt(x.qa)+' → '+(x.d>0?'+':'')+fmt(x.d)+(x.adj?' (adj WMS '+(x.adj>0?'+':'')+fmt(x.adj)+')':''))}
+ if(C.w){L.push('',`*${n++}. HANYA DI WMS (${C.w} baris)*`,'_Sudah keluar di WMS, belum ada di QAD._');cap(C.L.filter(x=>x.st==='w'),x=>'• '+x.spm+' | '+x.item+' | Qty '+fmt(x.qw)+(x.nopol||x.pic?' | 🚚 '+(x.nopol||'-')+' · 👤 '+(x.pic||'-'):''))}
+ if(C.q){L.push('',`*${n++}. HANYA DI QAD (${C.q} baris)*`,'_Ada shipper di QAD, belum ada muat di WMS._');cap(C.L.filter(x=>x.st==='q'),x=>'• '+x.spm+' | '+x.item+' | Qty '+fmt(x.qa))}
+ L.push('',`*${n++}. STATUS AKHIR*`,'',clean?'Status: CLOSED – OUT WMS = QAD, 100% PRESISI':'Status: OPEN – '+[C.diff&&C.diff+' SELISIH QTY',C.w&&C.w+' HANYA WMS',C.q&&C.q+' HANYA QAD'].filter(Boolean).join(' · '));
+ L.push('',LINE,'');if(M.meta.pelapor)L.push('Dilaporkan oleh: '+M.meta.pelapor);L.push('Update: '+pd(d0.getDate())+'-'+pd(d0.getMonth()+1)+'-'+d0.getFullYear()+' | '+pd(d0.getHours())+':'+pd(d0.getMinutes())+' WIB');return L.join('\n')}
+function Rkn(){const C=rknCalc(),hasW=Object.keys(M.dates).length>0;
+ const FL=[['perlu','Perlu dicek'],['all','Semua'],['diff','Selisih qty'],['w','Hanya di WMS'],['q','Hanya di QAD'],['ok','Cocok']];
+ let L=C?C.L.filter(x=>RKN.f==='all'||(RKN.f==='perlu'?x.st!=='ok':x.st===RKN.f)):[];const sq=RKN.s.trim().toLowerCase();if(sq)L=L.filter(x=>(x.spm+' '+x.item+' '+x.desc).toLowerCase().includes(sq));
+ const pct=C&&C.tot?C.ok/C.tot*100:0,TAGS={ok:['Cocok','g'],diff:['Selisih qty','r'],w:['Hanya di WMS','y'],q:['Hanya di QAD','b']};
+ return html`<${F0}>
+  <div className="card"><h3>Rekonsiliasi Muat WMS vs QAD</h3><div className="mute">Out WMS dibandingkan dengan Quantity Shipped di QAD, per no SPM (kolom <b>Comment Data[01]</b>) dan kode item. Tujuannya out WMS dan QAD 100% presisi.</div>
+   <label className="drop" onDragOver=${e=>e.preventDefault()} onDrop=${e=>{e.preventDefault();rknImport(e.dataTransfer.files[0])}}><b>📥 Upload file QAD</b><small>Pre-Shipper/Shipper .xlsx · kolom dikenali otomatis · boleh tarik file ke sini</small><input type="file" hidden accept=".xlsx,.xls,.csv" onChange=${e=>{const f=e.target.files[0];e.target.value='';rknImport(f)}}/></label>
+   ${!hasW?html`<div className="mute">⚠️ Belum ada data muat WMS. Upload laporan WMS di tab Muat agar bisa dibandingkan.</div>`:null}</div>
+  ${C?html`<div className=${'hero2 '+(C.tot&&C.ok===C.tot?'g':(pct>=90?'y':'r'))}><svg viewBox="0 0 64 64" className="ringsvg" role="img" aria-label=${'Cocok '+Math.round(pct)+' persen'}><circle cx="32" cy="32" r="26" className="rt"/><circle cx="32" cy="32" r="26" className="rv" strokeDasharray=${(pct/100*163.4).toFixed(1)+' 163.4'} transform="rotate(-90 32 32)"/><text x="32" y="37" textAnchor="middle">${Math.round(pct)}%</text></svg><div className="hv"><b>${C.tot&&C.ok===C.tot?'✅ Out WMS = QAD (100%)':'⚠️ '+(C.diff+C.w+C.q)+' baris perlu dicek'}</b><span>${RKN.fn||'-'} · ${C.range}</span></div></div>
+   <div className="cs"><span><b>${C.nQ}</b>SPM QAD</span><span><b>${C.nW}</b>SPM WMS</span><span className="g"><b>${C.ok}</b>cocok</span><span className=${C.diff?'r':'g'}><b>${C.diff}</b>selisih qty</span><span className=${C.w?'r':'g'}><b>${C.w}</b>hanya WMS</span><span className=${C.q?'r':'g'}><b>${C.q}</b>hanya QAD</span></div>
+   <div className="cs"><span><b>${fmt(C.tw)}</b>qty out WMS</span><span><b>${fmt(C.tq)}</b>qty QAD</span><span className=${Math.abs(C.tq-C.tw)<1e-6?'g':'r'}><b>${(C.tq-C.tw>0?'+':'')+fmt(C.tq-C.tw)}</b>selisih total</span></div>
+   <div className="row"><button className="btn pri" onClick=${()=>tgKirim(rknText(),'Rekonsiliasi Muat WMS vs QAD')}>✈️ Kirim ke Telegram</button><button className="btn" onClick=${async()=>{await copyTxt(rknText());toast('Laporan disalin')}}>Salin</button><button className="btn" onClick=${()=>ask('Reset upload QAD?','Hasil upload ini dikosongkan. Data WMS tidak berubah.','Reset',()=>{RKN.q=null;RKN.fn='';emit();toast('Upload dikosongkan')},1)}>↺ Reset</button></div>
+   <${Pick} title="Tampilkan" pre="Tampilkan" items=${FL} cur=${RKN.f} onPick=${v=>{RKN.f=v;RKN.lim=60;emit()}}/>
+   <input className="srch" placeholder="Cari no SPM / item…" value=${RKN.s} onInput=${e=>{RKN.s=e.target.value;RKN.lim=60;emit()}}/>
+   ${L.length?L.slice(0,RKN.lim).map(x=>html`<div key=${x.k} className=${'rkl '+TAGS[x.st][1]}><div className="rh"><b>${x.spm}</b><span className=${'tag '+TAGS[x.st][1]}>${TAGS[x.st][0]}</span></div><div>${x.item}${x.desc?' · '+x.desc:''}</div><div className="rq"><span>WMS <b>${x.qw==null?'—':fmt(x.qw)}</b></span><span>QAD <b>${x.qa==null?'—':fmt(x.qa)}${x.uom?' '+x.uom:''}</b></span>${x.d!=null?html`<span className=${x.d?'r':'g'}>Selisih <b>${(x.d>0?'+':'')+fmt(x.d)}</b></span>`:null}</div>${x.adj?html`<div className="mute">Adjustment WMS (muat − checker): <b>${(x.adj>0?'+':'')+fmt(x.adj)}</b></div>`:null}${x.nopol||x.pic?html`<div className="mute">🚚 ${x.nopol||'-'} · 👤 ${x.pic||'-'}</div>`:null}</div>`):html`<div className="mute">${C.tot&&C.ok===C.tot&&RKN.f==='perlu'?'✅ Tidak ada yang perlu dicek.':'Tidak ada data pada filter ini.'}</div>`}
+   ${L.length>RKN.lim?html`<div className="row"><button className="btn" onClick=${()=>{RKN.lim+=60;emit()}}>Tampilkan lebih banyak (${L.length-RKN.lim})</button></div>`:null}`
+  :html`<div className="card"><div className="mute">Belum ada file QAD. Unggah hasil browse <b>Pre-Shipper/Shipper</b> dari QAD (sheet "Data"). Aplikasi otomatis memakai kolom <b>Comment Data[01]</b> sebagai no SPM, <b>Container Item</b> sebagai item, dan <b>Quantity Shipped</b> sebagai qty.</div></div>`}
+ <//>`}
 /* ---------- CLEARING: cocokkan No Voucher (7 angka) hasil import dengan tab CLEARING ---------- */
 let CL={data:null,busy:false,err:'',imp:null,fn:'',col:-1,manual:false,dcol:-1,dman:false,sv:{},tg:null,tgAsked:false,f:'all',q:'',lim:60,loaded:false};
 /* nomor voucher 7 angka dari sel: abaikan awalan (apostrof, huruf, spasi, "No."), boleh banyak nomor dalam 1 sel,
@@ -2225,12 +2288,12 @@ function linkLabels(){let n=0;document.querySelectorAll('label.l').forEach(l=>{i
   if(!f||!/^(INPUT|SELECT|TEXTAREA)$/.test(f.tagName)||f.type==='checkbox')return;if(!f.id)f.id='fl'+(++n)+'_'+((l.textContent||'').replace(/\W+/g,'').slice(0,12));l.htmlFor=f.id})}
 function App(){const [,tick]=useReducer(x=>x+1,0);useEffect(()=>{linkLabels()});
  useEffect(()=>{subs.add(tick);tick();const k=e=>{if(e.key==='Escape'&&MENU)setMenu(false);if(e.key==='Escape'&&SHEET)closeSheet();const t=e.target;if(e.key==='Enter'&&t.tagName==='INPUT'&&t.type!=='file'&&t.type!=='checkbox')t.blur()};addEventListener('keydown',k);return()=>{subs.delete(tick);removeEventListener('keydown',k)}},[]);
- const V={home:Home,rak:Rak,muat:Muat,dash:Dash,lap:Lap,clr:Clr}[TAB]||Home;
+ const V={home:Home,rak:Rak,muat:Muat,dash:Dash,lap:Lap,clr:Clr,rkn:Rkn}[TAB]||Home;
  return html`<${F0}><${Header}/><main><${V}/></main><${Nav}/><${Sheet}/><${Toast}/><//>`}
 
 /* ============ START ============ */
 function boot(){
- try{const u=LS.g('wms_ui',{});if(['rak','muat','clr','dash','lap'].includes(u.tab)&&(!VIEW||u.tab==='dash'||u.tab==='lap'))TAB=u.tab;if(['rak','day','week','clr'].includes(u.lap))LAP=u.lap}catch(e){}
+ try{const u=LS.g('wms_ui',{});if(['rak','muat','clr','rkn','dash','lap'].includes(u.tab)&&(!VIEW||u.tab==='dash'||u.tab==='lap'))TAB=u.tab;if(['rak','day','week','clr'].includes(u.lap))LAP=u.lap}catch(e){}
  applyFS();applyTheme();try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(TH=='auto')applyTheme()})}catch(e){}
  setSync(GS?'ok':'local');LASTDAY=today();
  {let ly=window.scrollY||0,tk=false;window.addEventListener('scroll',()=>{if(tk)return;tk=true;requestAnimationFrame(()=>{const y=window.scrollY||0,B=document.body;if(y<80||y<ly-6||MENU||SHEET)B.classList.remove('bar-hide');else if(y>ly+6)B.classList.add('bar-hide');ly=y;tk=false})},{passive:true})}
