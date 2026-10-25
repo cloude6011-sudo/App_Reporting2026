@@ -2,6 +2,16 @@
 
 Aplikasi pelaporan WMS berbasis **Google Apps Script** + web app (HTML).
 
+## Checklist go-live
+1. **Apps Script:** pastikan 8 file ini ada di project: `Code.gs`, `Api.gs`, `Riset_Lengkap.gs`, `Clearing_Sync.gs`, `Clearing_UI.gs`, `Telegram_Clearing.gs`, `Telegram_Laporan.gs`, dan `Index.html` (isi dari `src/`).
+2. **Deploy:** Deploy > Manage deployments > pensil > Version: **New version**. Execute as **Me**, akses **Anyone**. Jalankan fungsi `siapkanPIN` sekali dan setujui semua izin.
+3. **Tes koneksi:** buka `.../exec?ping=1` (harus membalas JSON `{"ok":true,"api":true}`) dan halaman `cek.html`; semua baris harus PASS. Bila link `/exec` berubah, ubah `API_URL` di `index.html`, `src/Index.html`, dan `cek.html`.
+4. **PIN:** isi/ubah PIN di tab `PIN` pada spreadsheet database. Tim gudang = TULIS, manager = BACA (`?v=dash`).
+5. **Sumber data:** tab `Config` > kolom Izinkan = YA untuk spreadsheet sumber (Total Mobil dan CLEARING); isi Script property `SRC_ID`.
+6. **Telegram:** Menu > Pengaturan Telegram (token bot + chat ID), lalu kirim satu laporan uji.
+7. **GitHub Pages:** Settings > Pages harus aktif (workflow `static.yml`). Buka situs, tekan Ctrl+F5, masukkan PIN.
+8. **Uji dengan data nyata:** upload satu laporan WMS (Muat), satu file voucher (Clearing), dan satu file QAD (Rekon QAD); periksa hasilnya.
+
 ## Hosting GitHub Pages
 Frontend: **https://cloude6011-sudo.github.io/App_Reporting2026/** (dashboard manager: tambahkan `?v=dash`).
 
