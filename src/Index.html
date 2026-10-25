@@ -751,6 +751,22 @@ html.dk .qdiff{background:#3a2c0b;color:#ffe3a3}
 .dsec>summary::-webkit-details-marker{display:none}.dsec>summary h2{margin:0;font-size:1.05rem}
 .dsec>summary::after{content:"›";font-size:1.5rem;line-height:1;color:var(--mute);transition:transform .2s ease}.dsec[open]>summary::after{transform:rotate(90deg)}
 .dsec[open]>summary{border-bottom-color:var(--pri)}.dsec>summary:active{background:var(--prib)}
+
+/* ===== RAPI 2: konsistensi form, tabel, angka, tombol di semua layar ===== */
+html{-webkit-tap-highlight-color:transparent}
+button,.btn,.chip,.pick,.po,summary{touch-action:manipulation}
+label.l{display:block;font-size:.84rem;font-weight:600;color:var(--mute);margin:.75rem 0 .25rem}
+.sbody input:not([type=checkbox]):not([type=radio]):not([type=file]),.sbody select,.sbody textarea{width:100%;min-height:2.7rem;border:1px solid var(--line);border-radius:.8rem;background:var(--card);color:var(--ink);padding:.4rem .8rem;font-size:1rem}
+.sbody textarea{min-height:6rem;line-height:1.45}
+.sbody h3{margin:.1rem 0 .55rem;font-size:1.2rem}
+.sbody .row{display:flex;gap:.5rem;flex-wrap:wrap}.sbody .row>.btn{flex:1 1 8rem}
+.sbody .mute{font-size:.88rem;line-height:1.4}
+.sfoot{position:sticky;bottom:0;padding:.7rem 0 calc(.2rem + env(safe-area-inset-bottom));background:linear-gradient(to bottom,transparent,var(--card) 35%);z-index:2}
+.sfoot .btn{min-height:2.9rem}
+.tbl{border-collapse:collapse;width:100%}.tbl th{text-align:left;font-size:.8rem;color:var(--mute);padding:.4rem .5rem}
+.tbl td{padding:.4rem .5rem;border-bottom:1px solid var(--line)}.tbl tbody tr:nth-child(even){background:color-mix(in srgb,var(--line) 22%,transparent)}
+.tbl td,.tbl th,.kpi b,.k4 b,.cs b,.rq b,.okr b,.pic b{font-variant-numeric:tabular-nums}
+.empty{text-align:center;color:var(--mute);padding:1.6rem .8rem}.empty .ei{display:block;font-size:2rem;margin-bottom:.3rem}
 </style></head><body>
 <div id="root"><div class="boot"><div class="spin"></div>Memuat aplikasi…<div class="skel"></div><div class="skel" style="opacity:.7"></div><div class="skel" style="opacity:.45"></div></div></div>
 <script>window.__VIEW=false/*__MODE__*/</script><script>try{if(/[?&]v=dash\b/.test(location.search))window.__VIEW=true}catch(e){}</script>
