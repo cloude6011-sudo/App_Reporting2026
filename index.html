@@ -767,6 +767,11 @@ label.l{display:block;font-size:.84rem;font-weight:600;color:var(--mute);margin:
 .tbl td{padding:.4rem .5rem;border-bottom:1px solid var(--line)}.tbl tbody tr:nth-child(even){background:color-mix(in srgb,var(--line) 22%,transparent)}
 .tbl td,.tbl th,.kpi b,.k4 b,.cs b,.rq b,.okr b,.pic b{font-variant-numeric:tabular-nums}
 .empty{text-align:center;color:var(--mute);padding:1.6rem .8rem}.empty .ei{display:block;font-size:2rem;margin-bottom:.3rem}
+
+.shiftbox{border:1px solid var(--line);border-radius:.9rem;background:var(--card);padding:.5rem .8rem;margin:.5rem 0}
+.shh{font-size:.8rem;font-weight:700;color:var(--mute);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem}
+.shr{display:flex;flex-wrap:wrap;gap:.2rem .8rem;align-items:baseline;padding:.3rem 0;border-top:1px solid var(--line)}.shr:first-of-type{border-top:0}
+.shr b{min-width:5rem}.shr em{margin-left:auto;font-style:normal;font-weight:700}.shr .r{color:#dc2626;font-weight:700}.shr .g{color:#16a34a}.shr.bad em{color:#dc2626}
 </style></head><body>
 <div id="root"><div class="boot"><div class="spin"></div>Memuat aplikasi…<div class="skel"></div><div class="skel" style="opacity:.7"></div><div class="skel" style="opacity:.45"></div></div></div>
 <script>window.__VIEW=false/*__MODE__*/</script><script>try{if(/[?&]v=dash\b/.test(location.search))window.__VIEW=true}catch(e){}</script>
@@ -2184,6 +2189,10 @@ async function clExport(){const m=clMatch();if(!m)return;try{await need('xlsx')}
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),'Clearing');
  const buf=XLSX.write(wb,{type:'array',bookType:'xlsx'}),url=URL.createObjectURL(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})),a=document.createElement('a');
  a.href=url;a.download='Cocok Clearing '+today()+'.xlsx';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000)}
+/* rincian per shift dari kolom Shift pada file voucher: voucher, cocok (voucher+qty), selisih qty, belum ditemukan */
+function clShift(m){const g={};const at=o=>{const k=String(o&&o.Shift||'').trim()||'-';return g[k]||(g[k]={k,tot:0,ok:0,qd:0,no:0})};
+ m.ok.forEach(x=>{const r=at(x.o);r.tot++;if(x.qd)r.qd++;else r.ok++});m.no.forEach(x=>{const r=at(x.o);r.tot++;r.no++});
+ const L=Object.values(g).sort((a,b)=>String(a.k).localeCompare(b.k,undefined,{numeric:true}));return L.length===1&&L[0].k==='-'?[]:L}
 const BLNF=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 function clrText(){const I=CL.imp,m=clMatch();
  if(!I)return'Belum ada import. Upload laporan voucher di tab Clearing.';
@@ -2200,6 +2209,7 @@ function clrText(){const I=CL.imp,m=clMatch();
  if(qcmp&&nQd)L.push('Kecocokan Voucher + Qty : '+p2(m.full.length,tot));
  const auto=m.fx.length+m.conv.length;if(auto)L.push('Dicocokkan otomatis / divalidasi : '+auto+' voucher');
  L.push('','Status Rekonsiliasi : '+(clean?'SELESAI':'BELUM SELESAI'),'');
+ {const SH=clShift(m);if(SH.length){L.push('Rincian per shift:');SH.forEach(r=>L.push('• Shift '+r.k+' : '+r.tot+' voucher · '+r.ok+' cocok'+(r.qd?' · '+r.qd+' selisih qty':'')+(r.no?' · '+r.no+' belum ditemukan':'')+' ('+pct1(r.ok,r.tot)+')'));L.push('')}}
  const sh=[...new Set(I.list.map(o=>String(o.Shift||'').trim()).filter(Boolean))].sort(),vs=I.list.map(o=>+o.v).filter(Boolean),rg=vs.length?Math.min(...vs)+'–'+Math.max(...vs):'';
  const head='Hasil '+(sh.length?'Shift '+sh.join(', '):'Rekonsiliasi')+(rg?' – Voucher '+rg:'');
  if(clean)L.push('✅ '+head,'Seluruh '+tot+' voucher telah ditemukan dan sesuai dengan kuantitas hasil counting. Tidak terdapat selisih maupun temuan.');
@@ -2269,7 +2279,8 @@ function Clr(){
    <div className="prog"><div style=${{width:(tot?m.full.length/tot*100:0)+'%'}}></div></div>
    <div className="cact"><button className="btn pri sm" disabled=${!!CL.sv.busy} onClick=${()=>clSave(false)}>${CL.sv.busy?'⏳ Menyimpan…':'💾 Simpan'}</button><button className="btn sm" disabled=${!!CL.sv.busy} onClick=${()=>ask('Reset upload?','Hasil upload ini dikosongkan. Data di Sheet tidak berubah.','Reset',()=>{const sn={up:CL.up,fn:CL.fn};clReset();toastA('Upload dikosongkan','Urungkan',()=>{CL.up=sn.up;CL.fn=sn.fn;clBuild();clAuto();emit()})},1)}>↺ Reset</button><button className="btn sm" onClick=${async()=>{await copyTxt(clrText());toast('Laporan disalin')}}>Salin</button>${TGBTN(()=>tgKirim(clrText(),'Laporan Clearing'),true)}<button className="btn sm" onClick=${()=>window.open('https://wa.me/?text='+encodeURIComponent(clrText()),'_blank')}>WhatsApp</button><button className="btn sm" onClick=${async()=>{try{await navigator.share({title:'Laporan Clearing',text:clrText()})}catch(e){toast('Bagikan tidak tersedia, pakai Salin / WhatsApp')}}}>↗ Bagikan</button><button className="btn sm" onClick=${clExport}>⬇ Excel</button></div>
    <div className="mute" style=${{fontSize:'.8rem',margin:'.1rem 0 .3rem'}}>${CL.sv.err?html`<span style=${{color:'var(--bed)'}}>⚠️ Gagal simpan: ${CL.sv.err}</span>`:CL.sv.at?(CL.sv.tg&&CL.sv.tg.state=='fail'?'⚠️':'✓')+' Disimpan '+CL.sv.at+' · '+CL.sv.msg:'Simpan = catat hasil di Sheet'+(CL.tg?(CL.tg.on?' + kirim laporan ke Telegram ('+CL.tg.n+' chat)':CL.tg.set?' · Telegram nonaktif':' · Telegram belum diatur'):'')} <button className="btn sm" style=${{minHeight:'1.8rem',padding:'.1rem .5rem',marginLeft:'.3rem'}} onClick=${openTg}>⚙ Telegram</button></div>
-   <${Pick} title="Filter hasil" pre="Tampilkan" items=${[['all','Semua ('+cnt.all+')'],['no','Belum di CLEARING ('+cnt.no+')'],['ok','Cocok ('+cnt.ok+')'],['qd','Qty beda ('+cnt.qd+')'],['of','Hanya di CLEARING ('+cnt.of+')']]} cur=${CL.f} onPick=${k=>{CL.f=k;CL.lim=60;emit()}}/>
+   ${(()=>{const SH=clShift(m);return SH.length?html`<div className="shiftbox"><div className="shh">Per shift</div>${SH.map(r=>html`<div key=${r.k} className=${'shr'+(r.qd+r.no?' bad':'')}><b>Shift ${r.k}</b><span>${r.tot} voucher</span><span className="g">${r.ok} cocok</span><span className=${r.qd?'r':''}>${r.qd} selisih qty</span><span className=${r.no?'r':''}>${r.no} belum</span><em>${pct1(r.ok,r.tot)}</em></div>`)}</div>`:null})()}
+ <${Pick} title="Filter hasil" pre="Tampilkan" items=${[['all','Semua ('+cnt.all+')'],['no','Belum di CLEARING ('+cnt.no+')'],['ok','Cocok ('+cnt.ok+')'],['qd','Qty beda ('+cnt.qd+')'],['of','Hanya di CLEARING ('+cnt.of+')']]} cur=${CL.f} onPick=${k=>{CL.f=k;CL.lim=60;emit()}}/>
    <input type="search" placeholder="Cari voucher / item…" value=${CL.q} onInput=${e=>{CL.q=e.target.value;CL.lim=60;emit()}}/>
    ${pg.map(x=>html`<div className=${'cr '+x.k+(x.qd?' qd':'')} key=${x.k+x.v+(x.o?'|'+(x.o['Kode Item']||''):'')}>
      <div className="h"><b>${x.v}</b><span className="tag">${x.qd?'Qty beda':TAGS[x.k]}</span></div>
