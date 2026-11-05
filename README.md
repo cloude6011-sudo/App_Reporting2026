@@ -70,7 +70,7 @@ No lori dan PIC diambil otomatis dari kolom file upload atau tab CLEARING bila h
 Upload hasil browse QAD (Pre-Shipper/Shipper). Kolom dikenali otomatis: no SPM = `Comment Data[01]`, item = `Container Item`, qty = `Quantity Shipped`. Dibandingkan dengan qty muat WMS per SPM + item (hanya tanggal WMS di sekitar periode QAD). Hasil: cocok, selisih qty, hanya di WMS, hanya di QAD, dengan lori dan PIC untuk dicek, laporan Telegram/Salin, dan status `CLOSED – OUT WMS = QAD, 100% PRESISI`. Tahap berikutnya: analisa selisih terhadap adjustment, dan ekspor Excel.
 
 ### Laporan Muat (Harian & Mingguan)
-Berisi proses WMS (A), hasil muat (B), per PIC (C), alasan tidak diproses WMS (D), dan perlu tindak lanjut (E). Bagian counting checker (SKU selisih, SPM belum ada hasil counting, dan baris "Sudah dicek checker") **tidak lagi** ada di laporan Muat; rekonsiliasi counting ada di laporan Clearing. Data counting tetap tersedia di aplikasi dan Excel.
+Berisi proses WMS (A), hasil muat (B), per PIC (C), alasan tidak diproses WMS (D), dan perlu tindak lanjut (E). Bagian counting checker (SKU selisih, SPM belum ada hasil counting, dan baris "Sudah dicek checker") **tidak lagi** ada di laporan Muat; rekonsiliasi counting ada di laporan Clearing. Data counting tetap tersedia di aplikasi dan Excel. Selisih qty SPM vs muat dianggap kondisi aktual muat, bukan temuan, jadi tidak dimunculkan sebagai "perlu tindak lanjut" (laporan teks maupun Excel alasan).
 
 ### Kenyamanan pemakaian
 - Aplikasi mengingat tab dan jenis laporan terakhir yang dibuka, sehingga tidak mulai dari nol.

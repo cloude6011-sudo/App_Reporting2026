@@ -1330,8 +1330,7 @@ function waDay(S){const L=waHead('LAPORAN HARIAN KONTROL MUAT WMS',`Tanggal : ${
  else{L.push('Rekap alasan:');sortRc(S.reasonCount).forEach(([k,v])=>L.push(`• ${k} : ${v} mobil`));const det=S.reasons.filter(r=>r.spm||r.nopol||r.cust||r.cat);
   if(det.length){L.push('','Detail:');det.forEach((r,i)=>{L.push(`${i+1}. ${[r.spm&&('SPM '+r.spm),r.nopol,r.cust].filter(Boolean).join(' | ')||'Mobil '+(i+1)}`);L.push(`   Alasan : ${r.alasan||BELUM}`);if(r.cat)L.push(`   Ket    : ${r.cat}`)})}}
  const cr=waCR(S.pics);
- if(S.kurang.length||cr){L.push('','*E. PERLU TINDAK LANJUT*');if(cr)L.push(cr);
-  S.kurang.forEach(s=>L.push(`• Qty muat kurang: SPM ${s.spm} (${s.ship}) muat ${fmt(s.qtyMuat)} dari ${fmt(s.qtySpm)}, kurang ${fmt(s.qtySpm-s.qtyMuat)}`))}
+ if(cr)L.push('','*E. PERLU TINDAK LANJUT*',cr);
  return waFoot(L)}
 function waWeek(W){const T=W.T,L=waHead('LAPORAN MINGGUAN KONTROL MUAT WMS',`Periode : ${weekLabel(W.mon)}`);
  L.push('*A. REKAP PROSES WMS PER HARI*','```',padR('Tgl',7)+padL('Mbl',4)+padL('WMS',5)+padL('Tdk',5)+padL('%WMS',8),'-'.repeat(29));
@@ -1414,7 +1413,7 @@ async function excelDay(){await need('exceljs');const S=statsDay(DAY),wb=new Exc
  if(bel.length||S.kurang.length||crP.length){r=xSec(ws,r,'F. PERLU TINDAK LANJUT',9);
   if(crP.length){xCell(ws,r,1,'Copy Rekomendasi',{font:red});ws.mergeCells(r,2,r,9);xCell(ws,r,2,crP.map(p=>`${p.pic} ${p.copy} item`).join(', '));r++}
   if(bel.length){xCell(ws,r,1,`Belum dicek (${bel.length} SPM)`,{font:{bold:true}});ws.mergeCells(r,2,r,9);xCell(ws,r,2,bel.map(s=>s.spm).join(', '));r++}
-  S.kurang.forEach(s=>{xCell(ws,r,1,'Qty muat kurang',{font:red});ws.mergeCells(r,2,r,9);xCell(ws,r,2,`SPM ${s.spm} (${s.ship}) – muat ${fmt(s.qtyMuat)} dari ${fmt(s.qtySpm)}, kurang ${fmt(s.qtySpm-s.qtyMuat)}`);r++});r++}
+  r++}
  signature(ws,r,5);[30,13.5,13.5,13.5,13.5,13.5,13.5,13.5,13.5].forEach((w,i)=>ws.getColumn(i+1).width=w);landscape(ws);
  sheetDetailSpm(wb,S.spms);sheetSelisih(wb,[DAY]);sheetData(wb,M.dates[DAY].rows);await dl(wb,`Laporan Harian Muat WMS ${isoD(DAY)}.xlsx`)}
 async function excelWeek(){await need('exceljs');const W=statsWeek(WEEK),wb=new ExcelJS.Workbook(),ws=wb.addWorksheet('Ringkasan Mingguan',{views:[{showGridLines:false}]});
